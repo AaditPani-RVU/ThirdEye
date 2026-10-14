@@ -1,0 +1,37 @@
+{
+ "dropped": 0,
+ "restored": 0,
+ "error": "",
+ "claims": [
+  {
+   "claim": "The house model was finished",
+   "supported": true,
+   "evidence": "Outcome: finished"
+  },
+  {
+   "claim": "There was a single out-of-order step",
+   "supported": true,
+   "evidence": "Steps flagged by an alert: s3"
+  },
+  {
+   "claim": "Step s3 placed a blue 2x2 brick directly behind the left end of the front wall",
+   "supported": true,
+   "evidence": "Alert: t=4.0 out_of_order s3 ... Step s3 is \"Place a blue 2x2 brick directly behind the left end of the front wall\""
+  },
+  {
+   "claim": "The out-of-order step occurred at 0:04.0",
+   "supported": true,
+   "evidence": "Alert timestamp t=4.0 and camera log entry \"t=4.0 ADD blue_2x2 @ (0,2,L0,rot0)\""
+  },
+  {
+   "claim": "All 12 steps were completed",
+   "supported": true,
+   "evidence": "Steps completed: 12 of 12"
+  },
+  {
+   "claim": "11 steps followed the expected order",
+   "supported": true,
+   "evidence": "Steps done with no alert: s1, s2, s4, s5, s6, s7, s8, s9, s10, s11, s12 (11 steps)"
+  }
+ ]
+}

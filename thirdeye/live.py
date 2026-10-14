@@ -129,7 +129,7 @@ def build_pipeline(
     weights: str | None = None, zero_shot: bool = False,
     zero_shot_weights: str = str(MODELS / "yolov8s-worldv2.pt"), conf: float = 0.25,
     device: str | None = None, marker_size: float | None = None,
-    marker_gap: float | None = None, hands: bool = True,
+    marker_gap: float | None = None, hands: bool = True, colour_only: bool = False,
 ) -> TopDownPipeline | JigsawPipeline:
     """The perception pipeline a placement spec needs. Raises ValueError, with
     a message for the person at the keyboard, when something is missing."""
@@ -145,8 +145,10 @@ def build_pipeline(
             side_studs=1.0 if marker_size is None else marker_size,
             gap_studs=0.25 if marker_gap is None else marker_gap,
         )
-        jigsaw = JigsawPipeline(Calibrator(layout), PieceMatcher(picture, spec.board),
-                                hands=hand_detector)
+        # The colour-only baseline drops texture from the match: mean colour
+        # alone cannot see rotation, and confuses pieces of one sky.
+        matcher = PieceMatcher(picture, spec.board, colour_weight=1.0 if colour_only else 0.25)
+        jigsaw = JigsawPipeline(Calibrator(layout), matcher, hands=hand_detector)
         if empty is not None and not _set_empty(jigsaw, empty):
             raise ValueError(f"cannot calibrate on the empty-board photo {empty}")
         return jigsaw
@@ -184,6 +186,8 @@ def main(argv: list[str] | None = None) -> int:
                     help="printed marker side in grid units (default 3 studs; 1 cell)")
     ap.add_argument("--marker-gap", type=float, default=None,
                     help="gap between marker and grid, grid units (default 0.5 studs; 0.25 cell)")
+    ap.add_argument("--colour-only", action="store_true",
+                    help="jigsaw baseline: match pieces by mean colour alone")
     ap.add_argument("--no-hands", action="store_true")
     ap.add_argument("--no-show", action="store_true")
     ap.add_argument("--seconds", type=float, default=None, help="stop after this long")
@@ -202,7 +206,7 @@ def main(argv: list[str] | None = None) -> int:
             spec, reference=args.reference, empty=args.empty, weights=args.weights,
             zero_shot=args.zero_shot, zero_shot_weights=args.zero_shot_weights, conf=args.conf,
             device=args.device, marker_size=args.marker_size, marker_gap=args.marker_gap,
-            hands=not args.no_hands,
+            hands=not args.no_hands, colour_only=args.colour_only,
         )
     except ValueError as exc:
         ap.error(str(exc))
@@ -228,6 +232,7 @@ def main(argv: list[str] | None = None) -> int:
             # A file is timed by its frames, a camera by the clock.
             t = frames / fps if args.video else time.monotonic() - start
             frames += 1
+            t0 = time.perf_counter()
             result = pipeline.process(frame, t)
             if getattr(result, "captured_empty", False):
                 print(f"[{t:7.2f}] empty board captured; start placing pieces", flush=True)
@@ -237,6 +242,7 @@ def main(argv: list[str] | None = None) -> int:
                 for alert in session.pump():
                     print(alert, flush=True)
                     recent.append(str(alert))
+            pipeline.timings.add("frame", time.perf_counter() - t0)
             if not args.no_show:
                 cv2.imshow("Third Eye", draw(frame, result, session, recent, grid))
                 if cv2.waitKey(1) & 0xFF == ord("q"):
@@ -267,6 +273,8 @@ def main(argv: list[str] | None = None) -> int:
             "spec": str(args.spec), "frames": frames,
             "run": args.run or args.log.stem,
             "video": str(args.video or args.record or "") or None,
+            "latency": pipeline.timings.summary(), "fps": round(frames / max(elapsed, 1e-9), 2),
+            "baseline": "colour_only" if args.colour_only else None,
         })
         print(f"log: {record.write(args.log)}")
     return 0

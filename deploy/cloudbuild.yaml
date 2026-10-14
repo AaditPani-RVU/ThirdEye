@@ -1,0 +1,21 @@
+# Builds the server image with the Firebase web config baked into the UI.
+# Called by deploy/deploy.sh; the substitutions come from web/.env.production.
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - ${_IMAGE}
+      - --build-arg=VITE_FIREBASE_API_KEY=${_FB_API_KEY}
+      - --build-arg=VITE_FIREBASE_AUTH_DOMAIN=${_FB_AUTH_DOMAIN}
+      - --build-arg=VITE_FIREBASE_PROJECT_ID=${_FB_PROJECT_ID}
+      - --build-arg=VITE_FIREBASE_APP_ID=${_FB_APP_ID}
+      - .
+images:
+  - ${_IMAGE}
+substitutions:
+  _IMAGE: ""
+  _FB_API_KEY: ""
+  _FB_AUTH_DOMAIN: ""
+  _FB_PROJECT_ID: ""
+  _FB_APP_ID: ""

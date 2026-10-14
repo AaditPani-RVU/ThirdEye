@@ -41,8 +41,11 @@ class Runner:
 
     publish: Publish
     log_dir: Path | None = None
+    #: Called with the finished session's record and its plain report, to keep them.
+    on_end: Callable[[SessionRecord, str], object] | None = None
     _thread: threading.Thread | None = field(default=None, init=False)
     _stop: threading.Event = field(default_factory=threading.Event, init=False)
+    _started_at: str = field(default="", init=False)
 
     @property
     def running(self) -> bool:
@@ -54,6 +57,7 @@ class Runner:
             self._thread.join(wait)
 
     def _launch(self, target: Callable[[], None]) -> None:
+        self._started_at = _stamp()
         def guarded() -> None:
             try:
                 target()
@@ -66,18 +70,18 @@ class Runner:
 
     # --- bookkeeping shared by both sources ------------------------------------------
 
-    def _watch(self, session: Session) -> Callable[[float, bool], None]:
+    def _watch(self, session: Session) -> Callable[..., None]:
         """A per-frame callback that publishes new alerts and changed state."""
         sent_alerts = 0
         last: dict[str, Any] = {"rows": None, "t": -1.0}
 
-        def tick(t: float, force: bool = False) -> None:
+        def tick(t: float, force: bool = False, perception: str | None = None) -> None:
             nonlocal sent_alerts
             for a in session.alerts[sent_alerts:]:
                 self.publish(protocol.alert(a))
             sent_alerts = len(session.alerts)
-            msg = protocol.state(session, t)
-            key = (msg["checklist"], msg.get("tower"))
+            msg = protocol.state(session, t, perception)
+            key = (msg["checklist"], msg.get("tower"), perception)
             if force or key != last["rows"] or t - last["t"] >= 1.0:
                 self.publish(msg)
                 last["rows"], last["t"] = key, t
@@ -90,10 +94,18 @@ class Runner:
         self._publish_end(session, SessionRecord.of(session, meta=meta))
 
     def _publish_end(self, session: Session, record: SessionRecord) -> None:
+        record.meta.setdefault("started_at", self._started_at)
+        record.meta["ended_at"] = _stamp()
         if self.log_dir is not None:
             name = record.meta.get("run") or f"session_{int(time.time())}"
             record.write(self.log_dir / f"{name}.json")
-        self.publish(protocol.end(session.summary(), plain(record).markdown(), record.outcome))
+        report = plain(record).markdown()
+        if self.on_end is not None:
+            try:
+                self.on_end(record, report)
+            except Exception as exc:  # noqa: BLE001 -- storage trouble must not hide the result
+                self.publish(protocol.error(f"session not saved: {type(exc).__name__}: {exc}"))
+        self.publish(protocol.end(session.summary(), report, record.outcome))
 
     # --- sources ------------------------------------------------------------------------
 
@@ -134,6 +146,7 @@ class Runner:
             self.publish(protocol.hello(session, source=source))
             fps = capture.get(cv2.CAP_PROP_FPS) or 30.0
             start, frames, t, sent_at, recent = time.monotonic(), 0, 0.0, -1.0, []
+            blind, lost_after = 0, max(int(fps), 1)   # about a second of unusable frames
             try:
                 while not self._stop.is_set():
                     ok, img = capture.read()
@@ -141,21 +154,70 @@ class Runner:
                         break
                     t = frames / fps if video else time.monotonic() - start
                     frames += 1
+                    t0 = time.perf_counter()
                     result = pipeline.process(img, t)
+                    blind = 0 if result.usable else blind + 1
                     if result.usable:
                         session.state.observe(t, result.readings,
                                               hands_present=result.hands_present)
                         recent += [str(a) for a in session.pump()]
-                    tick(t)
+                    pipeline.timings.add("frame", time.perf_counter() - t0)
+                    tick(t, perception="lost" if blind >= lost_after else "ok")
                     if t - sent_at >= frame_every_s:
                         sent_at = t
                         self.publish(protocol.frame(t, _jpeg(
                             draw(img, result, session, recent, pipeline.grid))))
             finally:
                 capture.release()
-            self._finish(session, t, tick, {"source": source, **(meta or {})})
+            fps = frames / max(time.monotonic() - start, 1e-9)
+            self._finish(session, t, tick, {"source": source, **(meta or {}),
+                                            "latency": pipeline.timings.summary(),
+                                            "fps": round(fps, 2), "frames": frames})
 
         self._launch(run)
+
+
+    def start_jenga(self, session: Session, pipeline, feed, source: str,
+                    frame_every_s: float = 0.2, send_frames: bool = True,
+                    meta: dict[str, Any] | None = None) -> None:
+        """Corner depth cameras through `live_jenga.JengaPipeline`. `feed.next()`
+        gives (frames, t) or None at the end."""
+        from thirdeye.live_jenga import draw
+
+        tick = self._watch(session)
+
+        def run() -> None:
+            self.publish(protocol.hello(session, source=source))
+            t, sent_at, recent = 0.0, -1.0, []
+            start, frames = time.monotonic(), 0
+            while not self._stop.is_set() and (got := feed.next()) is not None:
+                batch, t = got
+                frames += 1
+                t0 = time.perf_counter()
+                result = pipeline.process(batch, t)
+                if result.observed:
+                    recent += [str(a) for a in session.pump()]
+                pipeline.timings.add("frame", time.perf_counter() - t0)
+                tick(t, perception="ok" if result.posed else "lost")
+                if send_frames and t - sent_at >= frame_every_s and batch[0] is not None:
+                    sent_at = t
+                    self.publish(protocol.frame(t, _jpeg(draw(
+                        batch[0], pipeline.poses[0], result, session, recent,
+                        len(session.state.current()) + 1))))
+                if session.outcome is not None:
+                    break
+            fps = frames / max(time.monotonic() - start, 1e-9)
+            self._finish(session, t, tick, {"source": source, **(meta or {}),
+                                            "latency": pipeline.timings.summary(),
+                                            "fps": round(fps, 2), "frames": frames})
+
+        self._launch(run)
+
+
+def _stamp() -> str:
+    from datetime import UTC, datetime
+
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 def _jpeg(img, width: int = 640) -> str:

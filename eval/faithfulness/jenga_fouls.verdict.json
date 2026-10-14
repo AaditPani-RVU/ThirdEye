@@ -1,0 +1,47 @@
+{
+ "dropped": 0,
+ "restored": 0,
+ "error": "",
+ "claims": [
+  {
+   "claim": "The Jenga game ended with a collapse after several rule violations.",
+   "supported": true,
+   "evidence": "Outcome: game_over; t=38.0 COLLAPSE; alerts include multiple rule violations (illegal_source_layer, two_handed_move, wrong_replacement, layer_started_early)."
+  },
+  {
+   "claim": "At 0:11.0 illegal source layer: Took a block from layer 17 slot 1 and placed it at layer 18 slot 1.",
+   "supported": true,
+   "evidence": "Alert: - t=11.0 illegal_source_layer move [alert]: (took from L17s1, placed at L18s1); Camera: t=11.0 MOVE @ L17s1->L18s1."
+  },
+  {
+   "claim": "At 0:17.0 two handed move: Took a block from layer 6 slot 0 and placed it at layer 18 slot 2.",
+   "supported": true,
+   "evidence": "Alert: - t=17.0 two_handed_move move [alert]: (took from L6s0, placed at L18s2); Camera: t=17.0 MOVE @ L6s0->L18s2."
+  },
+  {
+   "claim": "At 0:23.0 wrong replacement: Took a block from layer 7 slot 1 and placed it at layer 5 slot 1.",
+   "supported": true,
+   "evidence": "Alert: - t=23.0 wrong_replacement move [alert]: (took from L7s1, placed at L5s1); Camera: t=23.0 MOVE @ L7s1->L5s1."
+  },
+  {
+   "claim": "At 0:35.0 layer started early: Took a block from layer 9 slot 1 and placed it at layer 20 slot 0.",
+   "supported": true,
+   "evidence": "Alert: - t=35.0 layer_started_early move [alert]: (took from L9s1, placed at L20s0); Camera: t=35.0 MOVE @ L9s1->L20s0."
+  },
+  {
+   "claim": "At 0:35.0 wrong replacement: Placed the block from layer 9 slot 1 at layer 20 slot 0, which is not a top\u2011layer slot.",
+   "supported": true,
+   "evidence": "Alert: - t=35.0 wrong_replacement move [alert]: (took from L9s1, placed at L20s0); Camera: t=35.0 MOVE @ L9s1->L20s0."
+  },
+  {
+   "claim": "At 0:38.0 game over: The session ended with a tower collapse.",
+   "supported": true,
+   "evidence": "Alert: - t=38.0 game_over - [alert]: Session ended: game over; Camera: t=38.0 COLLAPSE."
+  },
+  {
+   "claim": "Six moves were made before the tower collapsed.",
+   "supported": true,
+   "evidence": "Header: Moves made: 6; Camera moves listed at t=5.0,11.0,17.0,23.0,29.0,35.0 before t=38.0 COLLAPSE."
+  }
+ ]
+}

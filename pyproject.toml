@@ -24,10 +24,22 @@ live = [
     "pyliblzfse>=0.4",              # Record3D .r3d depth frames (Jenga)
     "record3d>=1.4",                # Record3D live USB stream (Jenga)
 ]
-# Offline compile + explain (FR-CMP-10: never on the per-frame path)
+# The web server alone: replays, specs, history, the edge relay (no camera stack)
+server = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+]
+# Cloud Run: Firestore + Cloud Storage, Firebase ID-token checks
+cloud = [
+    "google-cloud-firestore>=2.16",
+    "google-cloud-storage>=2.16",
+    "google-auth>=2.29",
+    "requests>=2.31",
+]
+# Offline compile + explain (FR-CMP-10: never on the per-frame path). Groq,
+# Gemini and Ollama are plain HTTPS and need nothing; Claude needs its SDK.
 llm = [
     "anthropic>=0.49",
-    "python-dotenv>=1.0",
 ]
 train = [
     "torchvision>=0.17",
@@ -56,5 +68,5 @@ testpaths = ["tests"]
 
 [[tool.mypy.overrides]]
 # Optional extras imported lazily (`llm`, `live`); neither ships type information.
-module = ["anthropic", "anthropic.*", "mediapipe", "mediapipe.*", "liblzfse", "record3d"]
+module = ["anthropic", "anthropic.*", "google.*", "mediapipe", "mediapipe.*", "liblzfse", "record3d"]
 ignore_missing_imports = true

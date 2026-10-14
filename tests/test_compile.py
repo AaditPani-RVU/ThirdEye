@@ -136,10 +136,25 @@ def test_a_refusal_is_a_compile_error() -> None:
 
 def test_the_command_line_keeps_a_rejected_attempt(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setattr(
-        "thirdeye.compiler.compile.ClaudeLLM",
+        "thirdeye.compiler.compile.make_llm",
         lambda model: Scripted([_floating(), _floating()], model=model),
     )
     src = tmp_path / "manual.txt"
     src.write_text("1. a brick")
     assert main([str(src), "--kind", "dag", "-o", str(tmp_path / "spec.json")]) == 1
     assert (tmp_path / "spec.rejected.json").exists()
+
+
+def test_the_bare_baseline_skips_schema_example_and_repair() -> None:
+    calls = []
+
+    class Loose(Scripted):
+        def complete(self, system, user, schema):
+            calls.append((system, schema))
+            return super().complete(system, user, schema)
+
+    with pytest.raises(CompileError):
+        compile_source("m", "dag", Loose([_floating(), _text("example_dag.json")]),
+                       schema=False, example=False, repair=False)
+    assert len(calls) == 1 and calls[0][1] is None
+    assert "correctly compiled example" not in calls[0][0]

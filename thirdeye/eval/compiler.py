@@ -1,7 +1,8 @@
 """Is the compiler right? (EV-CMP-1..3, plan 5.3)
 
-    python -m thirdeye.eval.compiler --compile --model claude-sonnet-5   # spends ~20 calls
-    python -m thirdeye.eval.compiler --compiled eval/compiled/claude-sonnet-5
+    python -m thirdeye.eval.compiler --compile --model groq:openai/gpt-oss-120b   # ~20 calls
+    python -m thirdeye.eval.compiler --compile --model ollama:qwen3:8b            # local, free
+    python -m thirdeye.eval.compiler --compiled eval/compiled/groq_openai_gpt-oss-120b
 
 Compiles every manual in `manuals/eval_corpus/` (or reads specs compiled
 earlier) and scores each against its hand-written ground truth. Compiled specs
@@ -35,6 +36,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import random
 import sys
 from dataclasses import dataclass, field
@@ -275,7 +277,9 @@ def entries(corpus: Path = CORPUS) -> list[Entry]:
             for e in data["entries"]]
 
 
-def compile_entry(entry: Entry, llm) -> DagSpec | ConstraintSpec:
+def compile_entry(entry: Entry, llm, bare: bool = False) -> DagSpec | ConstraintSpec:
+    """`bare`: the baseline with no schema-constrained output, no worked example
+    and no repair round -- what the prompt alone achieves."""
     from thirdeye.compiler.compile import compile_source
     from thirdeye.compiler.jigsaw import compile_instructions
 
@@ -283,9 +287,10 @@ def compile_entry(entry: Entry, llm) -> DagSpec | ConstraintSpec:
     if entry.route == "jigsaw":
         assert entry.board is not None
         spec, _ = compile_instructions(source, *entry.board, llm, source_name=entry.name,
-                                       procedure=entry.name)
+                                       procedure=entry.name, schema=not bare, repair=not bare)
     else:
-        spec, _ = compile_source(source, entry.route, llm, source_name=entry.name)  # type: ignore[arg-type]
+        spec, _ = compile_source(source, entry.route, llm, source_name=entry.name,  # type: ignore[arg-type]
+                                 schema=not bare, example=not bare, repair=not bare)
     return spec
 
 
@@ -358,18 +363,28 @@ class CorpusResult:
         return "\n".join(lines)
 
 
-def run(compiled: Path, corpus: Path = CORPUS, llm=None) -> CorpusResult:
-    """Score every corpus entry, compiling first with `llm` if one is given."""
+def run(compiled: Path, corpus: Path = CORPUS, llm=None, fresh: bool = False,
+        bare: bool = False) -> CorpusResult:
+    """Score every corpus entry, compiling first with `llm` if one is given.
+
+    An entry already compiled into `compiled` is not compiled again unless
+    `fresh`, so an interrupted or rate-limited run picks up where it stopped.
+    """
     from thirdeye.compiler.compile import CompileError
+    from thirdeye.compiler.llm import LLMError
 
     result = CorpusResult()
     samples = sample_moves()
     compiled.mkdir(parents=True, exist_ok=True)
     for entry in entries(corpus):
         out = compiled / f"{entry.name}.json"
-        if llm is not None:
+        if llm is not None and (fresh or not out.exists()):
             try:
-                spec = compile_entry(entry, llm)
+                spec = compile_entry(entry, llm, bare=bare)
+            except LLMError as exc:
+                (compiled / f"{entry.name}.failed.txt").write_text(f"{exc}\n")
+                result.failed[entry.name] = str(exc)
+                continue
             except CompileError as exc:
                 (compiled / f"{entry.name}.failed.txt").write_text(
                     f"{exc}\n" + "\n".join(exc.problems) + f"\n\n{exc.raw}\n")
@@ -383,21 +398,30 @@ def run(compiled: Path, corpus: Path = CORPUS, llm=None) -> CorpusResult:
     return result
 
 
+def _folder(model: str) -> str:
+    return model.replace(":", "_").replace("/", "_")
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--compile", action="store_true", help="compile the corpus first (API calls)")
     ap.add_argument("--model", default=None, help="model to compile with")
     ap.add_argument("--compiled", type=Path, help="folder of compiled specs "
                     "(default eval/compiled/<model>)")
+    ap.add_argument("--bare", action="store_true",
+                    help="baseline: no schema-constrained output, no example, no repair")
+    ap.add_argument("--fresh", action="store_true",
+                    help="recompile entries that already have a compiled spec")
     ap.add_argument("--json", type=Path, help="write the full scores here")
     args = ap.parse_args(argv)
 
-    from thirdeye.compiler.compile import DEFAULT_MODEL, ClaudeLLM
+    from thirdeye.compiler.llm import DEFAULT_MODEL, make_llm
 
-    model = args.model or DEFAULT_MODEL
-    compiled = args.compiled or ROOT / "eval" / "compiled" / model
-    llm = ClaudeLLM(model=model) if args.compile else None
-    result = run(compiled, llm=llm)
+    model = args.model or os.environ.get("THIRDEYE_LLM") or DEFAULT_MODEL
+    compiled = args.compiled or ROOT / "eval" / "compiled" / (
+        _folder(model) + ("_bare" if args.bare else ""))
+    llm = make_llm(model) if args.compile else None
+    result = run(compiled, llm=llm, fresh=args.fresh, bare=args.bare)
     print(result.table())
     if args.json:
         args.json.parent.mkdir(parents=True, exist_ok=True)

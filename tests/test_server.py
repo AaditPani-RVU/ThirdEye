@@ -11,11 +11,14 @@ from fastapi.testclient import TestClient
 
 from thirdeye.server import protocol
 from thirdeye.server.app import create_app
+from thirdeye.server.auth import Auth
+from thirdeye.server.store import LocalStore
 
 
 @pytest.fixture
 def client(tmp_path: Path):
-    with TestClient(create_app(log_dir=tmp_path)) as c:
+    app = create_app(log_dir=tmp_path, store=LocalStore(tmp_path / "store"), auth=Auth())
+    with TestClient(app) as c:
         c.logs = tmp_path  # type: ignore[attr-defined]
         yield c
 
@@ -32,7 +35,7 @@ def _until_end(ws) -> list[dict]:
 def test_the_page_and_the_lists_are_served(client) -> None:
     assert "Third Eye" in client.get("/").text
     assert "jenga_fouls" in client.get("/api/scenarios").json()
-    assert "jigsaw_4x3" in client.get("/api/specs").json()
+    assert "jigsaw_4x3" in [s["name"] for s in client.get("/api/specs").json()]
 
 
 def test_a_replay_streams_hello_state_alerts_and_the_report(client) -> None:

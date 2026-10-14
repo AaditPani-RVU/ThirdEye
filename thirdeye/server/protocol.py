@@ -6,7 +6,7 @@ and stops sessions through the HTTP API (FR-UI-4). Bump `VERSION` on any change
 a UI written against the previous version would misread.
 
     hello   a session started    {procedure, kind, source, checklist, rules}
-    state   progress changed     {t, checklist, next, progress, tower?}
+    state   progress changed     {t, checklist, next, progress, tower?, perception?}
     alert   the checker spoke    {t, code, severity, text, target, rule}
     frame   the camera, overlaid {t, jpeg}        -- base64 JPEG, camera sources only
     end     the session is over  {summary, report, outcome}
@@ -17,7 +17,10 @@ done, error. `rules` (rulebooks) are {id, text, code}: what the checker
 enforces, in the rulebook's words. `progress` is "done/total" steps, or
 "N moves" for a rulebook. `tower` (Jenga) is {rows, top_layer, top_complete_layer,
 legal_slots}: the occupancy the checker is judging against and where the next
-block may legally go -- the live legality panel of FR-UI-2.
+block may legally go -- the live legality panel of FR-UI-2. `perception`
+(camera sources) is "lost" while calibration has been unusable for a while --
+alerts are paused then (FR-CAL-7) -- and "ok" otherwise; added within v1, so
+older readers simply ignore it.
 """
 
 from __future__ import annotations
@@ -54,7 +57,7 @@ def hello(session: Session, source: str) -> dict[str, Any]:
                 source=source, checklist=checklist(session), rules=rules(session))
 
 
-def state(session: Session, t: float) -> dict[str, Any]:
+def state(session: Session, t: float, perception: str | None = None) -> dict[str, Any]:
     rows = checklist(session)
     nxt = session.checker.next_expected()
     if all(a.repeatable for a in session.checker.actions):
@@ -68,6 +71,8 @@ def state(session: Session, t: float) -> dict[str, Any]:
         "next": None if nxt is None or nxt.repeatable else nxt.id,
         "progress": progress,
     }
+    if perception is not None:
+        body["perception"] = perception
     if isinstance(session.state, TowerLattice):
         snap = session.state.current()
         body["tower"] = {

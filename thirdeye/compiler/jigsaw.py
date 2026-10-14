@@ -36,15 +36,16 @@ from pydantic import Field, ValidationError
 
 from thirdeye.compiler.compile import (
     COMPILER_VERSION,
-    DEFAULT_MODEL,
     LLM,
     Attempt,
-    ClaudeLLM,
     CompileError,
     _strict,
+    model_name,
     repair_loop,
     stamp,
+    with_schema_text,
 )
+from thirdeye.compiler.llm import DEFAULT_MODEL, LLMError, make_llm
 from thirdeye.compiler.schema import (
     Board,
     DagSpec,
@@ -305,14 +306,18 @@ def check_plan(raw: str, cols: int, rows: int, procedure: str | None = None) -> 
 
 def compile_instructions(
     source: str, cols: int, rows: int, llm: LLM, source_name: str = "",
-    procedure: str | None = None,
+    procedure: str | None = None, *, schema: bool = True, repair: bool = True,
 ) -> tuple[DagSpec, list[Problem]]:
-    """Jigsaw instructions -> a phased piece-grid spec, with one repair round."""
+    """Jigsaw instructions -> a phased piece-grid spec, with one repair round.
+    (`schema` and `repair` off: the ablation baseline only.)"""
     system = _JIGSAW_RULES.format(cols=cols, rows=rows, selectors=SELECTORS)
+    if not schema:
+        system = with_schema_text(system, plan_schema())
     final, repaired = repair_loop(
-        llm, system, source, plan_schema(), lambda raw: check_plan(raw, cols, rows, procedure)
+        llm, system, source, plan_schema() if schema else None,
+        lambda raw: check_plan(raw, cols, rows, procedure), repair=repair,
     )
-    return stamp(final.spec, llm.model, source_name, repaired), final.warnings
+    return stamp(final.spec, model_name(llm), source_name, repaired), final.warnings
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -323,16 +328,20 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--any-order", action="store_true", help="no phases: pieces in any order")
     ap.add_argument("--instructions", type=Path,
                     help="read the order from this instruction sheet with the LLM")
-    ap.add_argument("--model", default=DEFAULT_MODEL)
+    ap.add_argument("--model", default=None,
+                    help=f"provider:model (default $THIRDEYE_LLM or {DEFAULT_MODEL})")
     ap.add_argument("--procedure", help="spec name (default jigsaw_COLSxROWS)")
     args = ap.parse_args(argv)
 
     if args.instructions:
         try:
             spec, warnings = compile_instructions(
-                args.instructions.read_text(), args.cols, args.rows, ClaudeLLM(model=args.model),
+                args.instructions.read_text(), args.cols, args.rows, make_llm(args.model),
                 source_name=args.instructions.as_posix(), procedure=args.procedure,
             )
+        except LLMError as exc:
+            print(f"compile failed: {exc}", file=sys.stderr)
+            return 1
         except CompileError as exc:
             print(f"compile failed: {exc}", file=sys.stderr)
             for p in exc.problems:

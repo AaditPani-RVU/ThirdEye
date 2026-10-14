@@ -5,9 +5,10 @@
 ### Catch mistakes in a procedure *as they happen*, from video, with rules an LLM reads from the manual.
 
 ![Python](https://img.shields.io/badge/python-3.11+-3776AB?logo=python&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-363%20passing-2e7d32)
+![Tests](https://img.shields.io/badge/tests-410%20passing-2e7d32)
 ![Status](https://img.shields.io/badge/status-in%20development-b8860b)
-![LLM](https://img.shields.io/badge/LLM-Claude-D97757)
+![LLM](https://img.shields.io/badge/LLM-Groq%20%C2%B7%20Ollama%20%C2%B7%20Gemini%20%C2%B7%20Claude-D97757)
+![Cloud](https://img.shields.io/badge/deploy-Cloud%20Run%20%2B%20Firebase-4285F4)
 
 [How it works](#how-it-works) · [Architecture](#architecture) · [Quick start](#quick-start) · [Status](#status) · [Roadmap](#roadmap)
 
@@ -120,11 +121,14 @@ flowchart LR
 
     classDef done fill:#d4edda,stroke:#2e7d32,color:#1b3d20
     classDef todo fill:#fff3cd,stroke:#b8860b,color:#4d3800
-    class L,V,G,K,HP,S,C,A,R done
-    class CAM todo
+    class L,V,G,K,HP,S,C,A,R,CAM done
 ```
 
-<div align="center"><sub>🟩 built&nbsp;&nbsp;·&nbsp;&nbsp;🟨 in progress / to do</sub></div>
+<div align="center"><sub>🟩 built (real-camera tuning still to do: see Status)</sub></div>
+
+**Deployment.** The cameras, perception and checker run on an **edge laptop**; the UI, specs,
+session history and replays run on **Google Cloud** (FastAPI on Cloud Run, Firestore + Cloud
+Storage, Firebase sign-in). The edge sends text only: protocol messages and the final log.
 
 <details>
 <summary><b>🔍 Design details</b></summary>
@@ -172,8 +176,10 @@ uv pip install -e ".[dev]"      # core + tests
 <summary>Optional extras</summary>
 
 ```bash
-uv pip install -e ".[live]"     # camera path: torch, ultralytics, mediapipe
-uv pip install -e ".[llm]"      # LLM compiler: anthropic SDK
+uv pip install -e ".[live]"     # camera path: mediapipe, Record3D, the server
+uv pip install -e ".[server]"   # just the web server (replays, specs, history)
+uv pip install -e ".[cloud]"    # Firestore, Cloud Storage, Firebase token checks
+uv pip install -e ".[llm]"      # only for Claude; Groq, Gemini, Ollama need nothing
 ./scripts/fetch_models.sh       # MediaPipe hand model → models/
 ```
 
@@ -207,24 +213,30 @@ jigsaw_4x3: 11/12 steps done, 1 alerts, 0 warnings
 
 A spec for any rectangular jigsaw: `python -m thirdeye.compiler.jigsaw 6 4 -o specs/jigsaw_6x4.json`.
 
-**4. Watch it in the browser**: a replay, streamed live to the demo UI
+**4. Watch it in the browser**: a replay, streamed live to the web UI
 
 ```bash
+(cd web && npm ci && npm run build)    # the React UI, once
 python -m thirdeye.server.app          # then open http://127.0.0.1:8000
 ```
 
 Pick a scenario and press **Replay**. The checklist ticks, alerts appear, and a Jenga game shows
-the tower with the legal slots outlined. The report appears at the end.
+the tower with the legal slots outlined. The report appears at the end and the session lands in
+**History**. **Procedures** compiles instructions with the LLM and lets you edit and re-validate
+the spec. (`cd web && npm run dev` gives a hot-reloading UI against the same server.)
 
 **5. Compile a manual into a spec**
 
 ```bash
-export ANTHROPIC_API_KEY=...
+echo 'GROQ_API_KEY=...' >> .env        # untracked; or pick another provider with --model
 python -m thirdeye.compiler.compile manuals/eval_corpus/jenga_standard.txt --kind constraints -o specs/jenga.json
 python -m thirdeye.compiler.jigsaw 6 4 --instructions manuals/eval_corpus/jigsaw_border_first.txt -o specs/j.json
+python -m thirdeye.compiler.compile manual.txt --kind dag -o s.json --model ollama:qwen3:8b   # local
 ```
 
-For a jigsaw the LLM only reads the *order* (as phases). Positions come from the board size.
+`--model` takes `groq:<model>` (default `groq:openai/gpt-oss-120b`), `ollama:<model>`,
+`gemini:<model>` or `claude:<model>`. For a jigsaw the LLM only reads the *order* (as phases);
+positions come from the board size.
 
 **6. Measure it**
 
@@ -232,6 +244,9 @@ For a jigsaw the LLM only reads the *order* (as phases). Positions come from the
 python -m thirdeye.eval.errors --scenarios scripts/scenarios        # P/R per error, false alerts, delay
 python -m thirdeye.eval.robustness                                  # same, under simulated detector noise
 python -m thirdeye.eval.compiler --compile                          # compiler accuracy (~20 API calls)
+python -m thirdeye.eval.faithfulness                                # LLM report vs log, LLM-judged
+python -m thirdeye.eval.latency data/logs                           # FPS + per-stage ms over sessions
+python -m thirdeye.eval.vlm_baseline run.mp4 --spec S --manual M -o vlm.json   # VLM baseline
 python -m thirdeye.explain.report run.json [--llm]                  # session report from a log
 ```
 
@@ -258,8 +273,36 @@ python scripts/make_markers.py markers.png       # print at 100%, tape at the pl
 python -m thirdeye.live --spec specs/model_a.json --zero-shot
 ```
 
-Jenga depth (iPhone via Record3D): `python -m thirdeye.perception.record3d game.r3d` describes a
-recording. `thirdeye.perception.tower` turns two corner depth views into slot occupancy.
+Jenga (iPhone LiDAR via Record3D, one or two corners, ArUco mat around the tower):
+
+```bash
+python -m thirdeye.perception.record3d game.r3d            # what a recording holds
+python -m thirdeye.live_jenga --spec specs/example_constraints.json --stream 0 [--stream 1]
+python -m thirdeye.live_jenga --spec specs/example_constraints.json --r3d A.r3d --r3d B.r3d \
+    --log data/logs/jenga_R001.json
+```
+
+Baselines on the same runs: `live.py --colour-only` (jigsaw matching by colour alone) and
+`live_jenga.py --rgb-only` (no depth).
+
+</details>
+
+<details>
+<summary><b>☁️ Cloud deployment and the edge laptop</b></summary>
+
+```bash
+gcloud auth login
+PROJECT=<gcp-project> ALLOWED=you@x.com,teammate@y.com ./deploy/deploy.sh   # Cloud Run, Firestore, GCS, secrets
+# on the demo laptop, with THIRDEYE_EDGE_TOKEN in .env (the script says where to get it):
+python -m thirdeye.server.edge --cloud https://<service>.run.app --scenario jenga_fouls   # test the link
+python -m thirdeye.server.edge --cloud https://<service>.run.app \
+    --spec specs/jigsaw_4x3.json --reference box.jpg --camera 0
+```
+
+Sign-in needs one manual step in the Firebase console (Google provider, a web app whose config
+goes in `web/.env.production`), then `FIREBASE=1 ./deploy/deploy.sh`. `deploy/hosting.sh` puts the
+UI on Firebase Hosting as well. Server settings: `THIRDEYE_STORE` (`local` | `firestore`),
+`THIRDEYE_AUTH` (`none` | `firebase`), `THIRDEYE_ALLOWED_EMAILS`, `THIRDEYE_EDGE_TOKEN`.
 
 </details>
 
@@ -272,10 +315,12 @@ recording. `thirdeye.perception.tower` turns two corner depth views into slot oc
 | Component | | Notes |
 | :-- | :-: | :-- |
 | Spec schema + validator | ✅ | Cycles, collisions, safe expressions |
-| LLM compiler | ✅ | Structured output + one repair round; jigsaw instructions → phases |
+| LLM compiler | ✅ | Groq / Ollama / Gemini / Claude; structured output + one repair round; jigsaw instructions → phases |
+| Compiler accuracy | ✅ | **Groq gpt-oss-120b: steps 1.00, order P/R 0.98/1.00, rules 1.00**; 15/16 compiled |
 | Checker engine | ✅ | One loop for both spec forms; looks again before an out-of-order alert |
 | Jenga lattice + collapse detection | ✅ | |
 | Jenga depth perception | ✅ | Two corner depth views → slot occupancy; synthetic-tested, not yet on a real phone |
+| Jenga live loop | ✅ | Record3D stream or `.r3d` → tower → lattice, hands, collapse; synthetic-tested |
 | iPhone LiDAR input | 🟨 | Record3D `.r3d` reader built; format to confirm on a real recording; live USB stream untested |
 | Calibration + hand tracking | ✅ | ArUco homography, MediaPipe |
 | Session log + scripted replay | ✅ | Replay can simulate detector noise |
@@ -283,10 +328,11 @@ recording. `thirdeye.perception.tower` turns two corner depth views into slot oc
 | Jigsaw piece matching | ✅ | Against the box picture; synthetic-tested, not yet on real photos |
 | Jigsaw live loop | ✅ | Webcam → matcher → tracker, with `--record`; tested on a synthetic video |
 | Session report | ✅ | From the log only; LLM findings must cite a logged alert |
-| Server + web UI | ✅ | FastAPI + WebSocket, one-page UI; replays today, camera path wired |
-| Evaluation scripts | ✅ | Errors (P/R, false alerts, delay), noise sweep, compiler accuracy |
+| Server + web UI | ✅ | FastAPI + WebSocket; React UI: live view, procedures (compile/edit/validate), history |
+| Cloud deployment | 🟨 | Store, sign-in, edge link, Dockerfile and deploy scripts built; not yet deployed (needs the team's GCP project) |
+| Evaluation scripts | ✅ | Errors, noise sweep, compiler accuracy, report faithfulness, latency, VLM + colour-only + RGB-only baselines |
 | Compiler eval corpus | ✅ | 16 manuals with ground truth (LEGO, jigsaw, Jenga variants); not yet run on a real LLM |
-| Step recognizer | ⬜ | Benchmark on Assembly101 / EgoPER |
+| Step recognizer | ⬜ | Demoted to Could (plan v2.0 §2.5) |
 
 ---
 
@@ -300,9 +346,9 @@ recording. `thirdeye.perception.tower` turns two corner depth views into slot oc
 - [x] Read colour + depth from Record3D exports (`perception/record3d.py`)
 - [x] Diagonal-corner views, two cameras merged (`perception/tower.py`)
 - [x] Empty and pushed-out slot detection from depth
+- [x] Live loop: Record3D stream → tower reading → lattice (`live_jenga.py`)
+- [x] Jenga rulebook → compiled spec, on a real LLM (4 rulebooks, all exact)
 - [ ] Check the `.r3d` reader and the depth margins on a real iPhone recording
-- [ ] Live loop: Record3D stream → tower reading → lattice
-- [ ] Jenga rulebook → compiled spec, on a real LLM
 - [ ] Record and label real games
 
 </details>
@@ -326,10 +372,12 @@ recording. `thirdeye.perception.tower` turns two corner depth views into slot oc
 - [x] LLM session report (`explain/`)
 - [x] FastAPI + WebSocket server and web UI
 - [x] Evaluation: precision/recall per error, false alerts per run, alert delay, noise sweep
-- [x] Compiler eval corpus + scorer
-- [ ] Run the compiler corpus on the chosen LLM
-- [ ] Step recognizer (`temporal/`)
-- [ ] Update `docs/` to the current direction
+- [x] Compiler eval corpus + scorer, run on Groq (and local Ollama)
+- [x] React UI, cloud store, sign-in, edge link, deploy scripts
+- [x] Report faithfulness, latency pooling, VLM / colour-only / RGB-only baselines
+- [x] `docs/` updated to jigsaw + Jenga (plan v2.0, requirements v2.0)
+- [ ] Deploy to the team's Google Cloud project
+- [ ] Step recognizer (`temporal/`), now a Could
 
 </details>
 
@@ -358,14 +406,17 @@ thirdeye/
 │   ├── jigsaw/       piece board
 │   └── lego/         stud grid · build tracker   (parked)
 ├── checker/       ⚖️ engine · expression evaluator · rule sets
-├── eval/          📏 label format · error scorer · noise sweep · compiler scorer
+├── eval/          📏 labels · errors · noise sweep · compiler · faithfulness · latency · VLM baseline
 ├── explain/       📝 session report
-├── server/        🌐 FastAPI app · WebSocket protocol · session runner
+├── server/        🌐 FastAPI app · protocol · runner · store · auth · edge link
 ├── session.py     joins a tracker and the checker for one run
 ├── sessionlog.py  JSON log, the report's only input
 ├── replay.py      scripted sessions through the real pipeline (optionally noisy)
-└── live.py        camera in, alerts out (LEGO, jigsaw)
-ui/                the demo page (one HTML file)
+├── live.py        webcam in, alerts out (jigsaw; LEGO parked)
+└── live_jenga.py  corner depth cameras in, alerts out
+web/               the React UI (built into web/dist, served by the app)
+ui/                the old one-page UI, used when there is no build
+deploy/            Cloud Run + Firebase deploy scripts
 specs/             procedure specs (JSON)
 manuals/           text manuals · eval_corpus/ with ground-truth specs
 scripts/           markers · scenario generator · eval corpus generator · model fetch
@@ -383,9 +434,5 @@ Still empty: `temporal/`, `configs/`.
 
 | | |
 | :-- | :-- |
-| 📋 [Project plan](docs/Third_Eye_Project_Plan.md) | Problem, architecture, timeline, risks |
-| ✅ [Requirements](docs/Third_Eye_Requirements.md) | 255 numbered requirements, the `FR-*` / `NFR-*` IDs cited in the code |
-
-> [!IMPORTANT]
-> Both documents still describe the original **LEGO-first** plan and haven't been updated for
-> the switch to Jenga + jigsaw.
+| 📋 [Project plan](docs/Third_Eye_Project_Plan.md) | v2.0: jigsaw + Jenga, architecture, deployment, evaluation, timeline, risks |
+| ✅ [Requirements](docs/Third_Eye_Requirements.md) | v2.0 change record (§0) over the numbered `FR-*` / `NFR-*` IDs cited in the code |

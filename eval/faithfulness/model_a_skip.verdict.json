@@ -1,0 +1,42 @@
+{
+ "dropped": 0,
+ "restored": 0,
+ "error": "",
+ "claims": [
+  {
+   "claim": "The session finished.",
+   "supported": true,
+   "evidence": "Outcome: finished"
+  },
+  {
+   "claim": "The session included an out\u2011of\u2011order step.",
+   "supported": true,
+   "evidence": "Alert at t=11.5 out_of_order s6 [alert]: The manual places s5 before this step."
+  },
+  {
+   "claim": "The session included a missed piece (missed step).",
+   "supported": true,
+   "evidence": "Alert at t=28.0 missed_step s5 [alert]: Step s5 was never done."
+  },
+  {
+   "claim": "At time 0:11.5, step s6 was placed before step s5.",
+   "supported": true,
+   "evidence": "Alert t=11.5 out_of_order s6 indicates s6 occurred before s5; camera log shows ADD yellow_1x4 (step s6) at t=11.5 and no earlier entry for step s5."
+  },
+  {
+   "claim": "At time 0:28.0, step s5 was never performed.",
+   "supported": true,
+   "evidence": "Alert t=28.0 missed_step s5 states \"Step s5 was never done\"."
+  },
+  {
+   "claim": "The white 1x2 brick is missing from its expected location.",
+   "supported": true,
+   "evidence": "Alert t=28.0 missed_step s5 notes the white_1x2 is missing from (2,2) on layer 0; the camera log only shows a white_1x2 added at (3,4,L1,rot90) at t=26.5."
+  },
+  {
+   "claim": "Steps s1, s2, s3, s4, s7, s8, s9, s10, s11, and s12 were performed without alerts.",
+   "supported": true,
+   "evidence": "Steps done with no alert (right part, place and order): s1, s2, s3, s4, s7, s8, s9, s10, s11, s12"
+  }
+ ]
+}

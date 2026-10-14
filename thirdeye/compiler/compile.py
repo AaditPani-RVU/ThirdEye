@@ -33,12 +33,13 @@ from typing import Any, Literal, Protocol
 from pydantic import ValidationError
 
 from thirdeye.compiler.expr import vocabulary_prompt
+from thirdeye.compiler.llm import DEFAULT_MODEL, LLMError, make_llm
 from thirdeye.compiler.schema import ConstraintSpec, DagSpec, Provenance, parse_spec
 from thirdeye.compiler.validate import Problem, errors, validate
 
-COMPILER_VERSION = "0.1.0"
-#: Plan section 3. Overridable per call; the choice is recorded in every spec.
-DEFAULT_MODEL = "claude-sonnet-5"
+COMPILER_VERSION = "0.2.0"
+#: Claude's default when it is picked; the project default is `llm.DEFAULT_MODEL`.
+CLAUDE_MODEL = "claude-sonnet-5"
 
 Kind = Literal["dag", "constraints"]
 
@@ -54,7 +55,7 @@ class LLM(Protocol):
 
     model: str
 
-    def complete(self, system: str, user: str, schema: dict[str, Any]) -> str: ...
+    def complete(self, system: str, user: str, schema: dict[str, Any] | None) -> str: ...
 
 
 class CompileError(Exception):
@@ -144,12 +145,14 @@ Expressions may use only this vocabulary:
 """
 
 
-def _system(kind: Kind) -> str:
+def _system(kind: Kind, example: bool = True) -> str:
     rules = _DAG_RULES if kind == "dag" else _CONSTRAINT_RULES.format(
         vocabulary=vocabulary_prompt()
     )
-    example = EXAMPLES[kind].read_text()
-    return f"{rules}\nA correctly compiled example, for format only:\n\n{example}"
+    if not example:
+        return rules
+    shown = EXAMPLES[kind].read_text()
+    return f"{rules}\nA correctly compiled example, for format only:\n\n{shown}"
 
 
 def _repair_prompt(source: str, raw: str, problems: list[str]) -> str:
@@ -199,7 +202,8 @@ def check(raw: str, kind: Kind) -> Attempt:
 
 
 def repair_loop(
-    llm: LLM, system: str, source: str, schema: dict[str, Any], check_fn: Callable[[str], Attempt]
+    llm: LLM, system: str, source: str, schema: dict[str, Any] | None,
+    check_fn: Callable[[str], Attempt], repair: bool = True,
 ) -> tuple[Attempt, bool]:
     """Ask once; if the answer has problems, ask once more with them listed.
 
@@ -209,13 +213,14 @@ def repair_loop(
     """
     first = check_fn(llm.complete(system, source, schema))
     final, repaired = first, False
-    if first.problems:
+    if first.problems and repair:
         final = check_fn(llm.complete(system, _repair_prompt(source, first.raw, first.problems),
                                       schema))
         repaired = True
     if final.problems or final.spec is None:
         raise CompileError(
-            f"spec failed validation after one repair round ({len(final.problems)} problem(s))",
+            f"spec failed validation {'after one repair round' if repaired else 'with no repair round'}"
+            f" ({len(final.problems)} problem(s))",
             final.problems,
             final.raw,
         )
@@ -238,16 +243,35 @@ def stamp(spec, model: str, source_name: str, repaired: bool):
 
 
 def compile_source(
-    source: str, kind: Kind, llm: LLM, source_name: str = ""
+    source: str, kind: Kind, llm: LLM, source_name: str = "", *,
+    schema: bool = True, example: bool = True, repair: bool = True,
 ) -> tuple[DagSpec | ConstraintSpec, list[Problem]]:
     """Compile a manual or rulebook. Returns the spec and its validation warnings.
 
     Raises `CompileError` if the spec still fails after one repair round.
+    `schema`, `example` and `repair` exist for the ablation baseline only
+    (`eval.compiler --bare`): the schema is given as text in the prompt but
+    not enforced in decoding, there is no worked example and no repair round.
     """
+    system = _system(kind, example)
+    if not schema:
+        system = with_schema_text(system, output_schema(kind))
     final, repaired = repair_loop(
-        llm, _system(kind), source, output_schema(kind), lambda raw: check(raw, kind)
+        llm, system, source, output_schema(kind) if schema else None,
+        lambda raw: check(raw, kind), repair=repair,
     )
-    return stamp(final.spec, llm.model, source_name, repaired), final.warnings
+    return stamp(final.spec, model_name(llm), source_name, repaired), final.warnings
+
+
+def with_schema_text(system: str, schema: dict[str, Any]) -> str:
+    """For unconstrained (plain JSON) decoding: the schema, as text."""
+    return (f"{system}\nAnswer with one JSON object, and nothing else, matching this JSON "
+            f"schema:\n\n{json.dumps(schema)}")
+
+
+def model_name(llm: LLM) -> str:
+    """`provider:model` when the backend knows it, for provenance."""
+    return getattr(llm, "name", llm.model)
 
 
 # --- the real model -------------------------------------------------------------------
@@ -260,11 +284,11 @@ class ClaudeLLM:
     from code or config (NFR-PRIV-2).
     """
 
-    model: str = DEFAULT_MODEL
+    model: str = CLAUDE_MODEL
     max_tokens: int = 16000
     client: Any = None
 
-    def complete(self, system: str, user: str, schema: dict[str, Any]) -> str:
+    def complete(self, system: str, user: str, schema: dict[str, Any] | None) -> str:
         if self.client is None:
             import anthropic  # the `llm` extra; imported here so nothing else needs it
 
@@ -274,7 +298,8 @@ class ClaudeLLM:
             max_tokens=self.max_tokens,
             system=system,
             messages=[{"role": "user", "content": user}],
-            output_config={"format": {"type": "json_schema", "schema": schema}},
+            **({"output_config": {"format": {"type": "json_schema", "schema": schema}}}
+               if schema is not None else {}),
         )
         if response.stop_reason in ("refusal", "max_tokens"):
             raise CompileError(f"the model stopped early: {response.stop_reason}", [], "")
@@ -286,14 +311,18 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("source", type=Path, help="manual or rulebook, plain text")
     ap.add_argument("--kind", choices=["dag", "constraints"], required=True)
     ap.add_argument("-o", "--out", type=Path, required=True)
-    ap.add_argument("--model", default=DEFAULT_MODEL)
+    ap.add_argument("--model", default=None,
+                    help=f"provider:model (default $THIRDEYE_LLM or {DEFAULT_MODEL})")
     args = ap.parse_args(argv)
 
     try:
         spec, warnings = compile_source(
-            args.source.read_text(), args.kind, ClaudeLLM(model=args.model),
+            args.source.read_text(), args.kind, make_llm(args.model),
             source_name=args.source.as_posix(),
         )
+    except LLMError as exc:
+        print(f"compile failed: {exc}", file=sys.stderr)
+        return 1
     except CompileError as exc:
         print(f"compile failed: {exc}", file=sys.stderr)
         for p in exc.problems:

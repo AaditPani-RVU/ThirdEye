@@ -1,0 +1,21 @@
+entry                   steps    order P/R  hard R  rules  moves
+lego_bench               1.00   1.00/1.00     1.00
+lego_tower               1.00   1.00/1.00     1.00
+lego_bridge              1.00   0.73/1.00     1.00
+lego_letter_l            1.00   1.00/1.00     1.00
+lego_table               1.00   1.00/1.00     1.00
+lego_frame               1.00   1.00/1.00     1.00
+lego_stairs              1.00   1.00/1.00     1.00
+jigsaw_border_first      1.00   1.00/1.00     1.00
+jigsaw_rows              1.00   1.00/1.00     1.00
+jigsaw_sky_first         1.00   1.00/1.00     1.00
+jigsaw_free              1.00   1.00/1.00     1.00
+jenga_standard                                       1.00   1.00
+jenga_house_rules                                    1.00   1.00
+jenga_sides_only                                     1.00   1.00
+jenga_free_top                                       1.00   1.00
+lego_wall               compile failed: spec failed validation after one repair round (2 problem(s))
+
+step accuracy 1.00 (target 0.9)   order P/R 0.98/1.00 (target 0.8)
+constraint accuracy 1.00, precision 1.00; move agreement 1.00
+errors: {'wrong_part': 0, 'wrong_pose': 0, 'missed': 0, 'hallucinated': 0, 'missed_rule': 0, 'hallucinated_rule': 0}; compile failures: 1

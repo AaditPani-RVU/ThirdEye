@@ -1,0 +1,32 @@
+{
+ "dropped": 0,
+ "restored": 0,
+ "error": "",
+ "claims": [
+  {
+   "claim": "All 12 steps were completed.",
+   "supported": true,
+   "evidence": "Steps completed: 12 of 12"
+  },
+  {
+   "claim": "The model was finished.",
+   "supported": true,
+   "evidence": "Outcome: finished"
+  },
+  {
+   "claim": "A purple_1x2 piece was added at (14,15) on layer 0 at time 16.5.",
+   "supported": true,
+   "evidence": "- t=16.5 ADD purple_1x2 @ (14,15,L0,rot0)"
+  },
+  {
+   "claim": "The purple_1x2 piece is not used by any remaining step.",
+   "supported": true,
+   "evidence": "- t=16.5 extra_part - [alert]: A purple_1x2 is on the plate at (14,15) on layer 0, but no remaining step in this model uses it there."
+  },
+  {
+   "claim": "Steps s1 through s12 were completed without alerts.",
+   "supported": false,
+   "evidence": "Alerts list includes an alert at t=16.5 (extra_part), so the session did have an alert."
+  }
+ ]
+}

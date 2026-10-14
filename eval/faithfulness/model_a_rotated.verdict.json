@@ -1,0 +1,37 @@
+{
+ "dropped": 0,
+ "restored": 0,
+ "error": "",
+ "claims": [
+  {
+   "claim": "The house model was finished.",
+   "supported": true,
+   "evidence": "Outcome: finished"
+  },
+  {
+   "claim": "A rotation error was detected on the final piece.",
+   "supported": true,
+   "evidence": "Alerts (time in seconds, code, step, the rule's own words): - t=29.0 wrong_rotation s12 [alert]: The white_1x2 at (3,4) on layer 1 is turned 180 degrees, but step s12 needs it at 90"
+  },
+  {
+   "claim": "At 0:29.0 a wrong rotation alert occurred for step s12.",
+   "supported": true,
+   "evidence": "t=29.0 wrong_rotation s12"
+  },
+  {
+   "claim": "The white_1x2 brick at (3,4) on layer 1 was placed rotated 180 degrees.",
+   "supported": true,
+   "evidence": "t=29.0 ADD white_1x2 @ (3,4,L1,rot180)"
+  },
+  {
+   "claim": "The required orientation for that piece is 90 degrees.",
+   "supported": true,
+   "evidence": "Alert text: \"...but step s12 needs it at 90\""
+  },
+  {
+   "claim": "Steps s1 through s11 were completed without any alerts.",
+   "supported": true,
+   "evidence": "Steps done with no alert (right part, place and order): s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11"
+  }
+ ]
+}

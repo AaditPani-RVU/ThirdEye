@@ -1,0 +1,369 @@
+{
+ "summary": {
+  "entries": 16,
+  "compile_failures": 1,
+  "step_accuracy": 1.0,
+  "order_precision": 0.9757575757575757,
+  "order_recall": 1.0,
+  "hard_dependency_recall": 1.0,
+  "constraint_accuracy": 1.0,
+  "constraint_precision": 1.0,
+  "move_agreement": 1.0,
+  "error_taxonomy": {
+   "wrong_part": 0,
+   "wrong_pose": 0,
+   "missed": 0,
+   "hallucinated": 0,
+   "missed_rule": 0,
+   "hallucinated_rule": 0
+  }
+ },
+ "entries": {
+  "lego_bench": {
+   "steps": 4,
+   "step_accuracy": 1.0,
+   "errors": {
+    "wrong_part": [],
+    "wrong_pose": [],
+    "missed": [],
+    "hallucinated": []
+   },
+   "order": {
+    "tp": 6,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "hard_dependencies": {
+    "tp": 3,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "optional_accuracy": 1.0
+  },
+  "lego_tower": {
+   "steps": 5,
+   "step_accuracy": 1.0,
+   "errors": {
+    "wrong_part": [],
+    "wrong_pose": [],
+    "missed": [],
+    "hallucinated": []
+   },
+   "order": {
+    "tp": 10,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "hard_dependencies": {
+    "tp": 4,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "optional_accuracy": 1.0
+  },
+  "lego_bridge": {
+   "steps": 6,
+   "step_accuracy": 1.0,
+   "errors": {
+    "wrong_part": [],
+    "wrong_pose": [],
+    "missed": [],
+    "hallucinated": []
+   },
+   "order": {
+    "tp": 11,
+    "fp": 4,
+    "fn": 0,
+    "precision": 0.7333333333333333,
+    "recall": 1.0
+   },
+   "hard_dependencies": {
+    "tp": 5,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "optional_accuracy": 1.0
+  },
+  "lego_letter_l": {
+   "steps": 4,
+   "step_accuracy": 1.0,
+   "errors": {
+    "wrong_part": [],
+    "wrong_pose": [],
+    "missed": [],
+    "hallucinated": []
+   },
+   "order": {
+    "tp": 6,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "hard_dependencies": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "optional_accuracy": 1.0
+  },
+  "lego_table": {
+   "steps": 7,
+   "step_accuracy": 1.0,
+   "errors": {
+    "wrong_part": [],
+    "wrong_pose": [],
+    "missed": [],
+    "hallucinated": []
+   },
+   "order": {
+    "tp": 15,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "hard_dependencies": {
+    "tp": 5,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "optional_accuracy": 1.0
+  },
+  "lego_frame": {
+   "steps": 5,
+   "step_accuracy": 1.0,
+   "errors": {
+    "wrong_part": [],
+    "wrong_pose": [],
+    "missed": [],
+    "hallucinated": []
+   },
+   "order": {
+    "tp": 10,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "hard_dependencies": {
+    "tp": 4,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "optional_accuracy": 1.0
+  },
+  "lego_stairs": {
+   "steps": 4,
+   "step_accuracy": 1.0,
+   "errors": {
+    "wrong_part": [],
+    "wrong_pose": [],
+    "missed": [],
+    "hallucinated": []
+   },
+   "order": {
+    "tp": 6,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "hard_dependencies": {
+    "tp": 3,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "optional_accuracy": 1.0
+  },
+  "jigsaw_border_first": {
+   "steps": 24,
+   "step_accuracy": 1.0,
+   "errors": {
+    "wrong_part": [],
+    "wrong_pose": [],
+    "missed": [],
+    "hallucinated": []
+   },
+   "order": {
+    "tp": 176,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "hard_dependencies": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "optional_accuracy": 1.0
+  },
+  "jigsaw_rows": {
+   "steps": 20,
+   "step_accuracy": 1.0,
+   "errors": {
+    "wrong_part": [],
+    "wrong_pose": [],
+    "missed": [],
+    "hallucinated": []
+   },
+   "order": {
+    "tp": 150,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "hard_dependencies": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "optional_accuracy": 1.0
+  },
+  "jigsaw_sky_first": {
+   "steps": 30,
+   "step_accuracy": 1.0,
+   "errors": {
+    "wrong_part": [],
+    "wrong_pose": [],
+    "missed": [],
+    "hallucinated": []
+   },
+   "order": {
+    "tp": 288,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "hard_dependencies": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "optional_accuracy": 1.0
+  },
+  "jigsaw_free": {
+   "steps": 12,
+   "step_accuracy": 1.0,
+   "errors": {
+    "wrong_part": [],
+    "wrong_pose": [],
+    "missed": [],
+    "hallucinated": []
+   },
+   "order": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "hard_dependencies": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "optional_accuracy": 1.0
+  },
+  "jenga_standard": {
+   "rules": 4,
+   "constraint_accuracy": 1.0,
+   "constraint_precision": 1.0,
+   "errors": {
+    "missed_rule": [],
+    "hallucinated_rule": []
+   },
+   "same_code": 4,
+   "move_agreement": 1.0,
+   "terminal_match": [
+    "game_over"
+   ],
+   "terminal_expected": [
+    "game_over"
+   ]
+  },
+  "jenga_house_rules": {
+   "rules": 3,
+   "constraint_accuracy": 1.0,
+   "constraint_precision": 1.0,
+   "errors": {
+    "missed_rule": [],
+    "hallucinated_rule": []
+   },
+   "same_code": 3,
+   "move_agreement": 1.0,
+   "terminal_match": [
+    "game_over"
+   ],
+   "terminal_expected": [
+    "game_over"
+   ]
+  },
+  "jenga_sides_only": {
+   "rules": 5,
+   "constraint_accuracy": 1.0,
+   "constraint_precision": 1.0,
+   "errors": {
+    "missed_rule": [],
+    "hallucinated_rule": []
+   },
+   "same_code": 4,
+   "move_agreement": 1.0,
+   "terminal_match": [
+    "game_over"
+   ],
+   "terminal_expected": [
+    "game_over"
+   ]
+  },
+  "jenga_free_top": {
+   "rules": 3,
+   "constraint_accuracy": 1.0,
+   "constraint_precision": 1.0,
+   "errors": {
+    "missed_rule": [],
+    "hallucinated_rule": []
+   },
+   "same_code": 2,
+   "move_agreement": 1.0,
+   "terminal_match": [
+    "game_over"
+   ],
+   "terminal_expected": [
+    "game_over"
+   ]
+  }
+ },
+ "failed": {
+  "lego_wall": "spec failed validation after one repair round (2 problem(s))"
+ }
+}

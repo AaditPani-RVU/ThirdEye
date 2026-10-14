@@ -1,0 +1,47 @@
+{
+ "dropped": 0,
+ "restored": 0,
+ "error": "",
+ "claims": [
+  {
+   "claim": "The model was built.",
+   "supported": true,
+   "evidence": "Outcome: finished (log) and multiple ADD actions for steps s1\u2011s11."
+  },
+  {
+   "claim": "Step s12 was not completed.",
+   "supported": true,
+   "evidence": "Steps never done: s12; also alert at t=33.0 missed_step s12."
+  },
+  {
+   "claim": "The missing step resulted in a missing back\u2011wall bridge.",
+   "supported": true,
+   "evidence": "Step s12 description: \"Bridge the join in the back wall with a white 1x2 brick...\" and the step was never done (log)."
+  },
+  {
+   "claim": "At 0:31.5, the white 1x2 brick from step s12 was removed.",
+   "supported": true,
+   "evidence": "t=31.5 REMOVE white_1x2 @ (3,4,L1,rot90) and alert \"removed_part s12\"."
+  },
+  {
+   "claim": "The removal means the bridge in the back wall is no longer present.",
+   "supported": true,
+   "evidence": "The removed brick is the white 1x2 that constitutes the back\u2011wall bridge (step s12 description)."
+  },
+  {
+   "claim": "At 0:33.0, step s12 was not completed; the white 1x2 brick is missing.",
+   "supported": true,
+   "evidence": "t=33.0 missed_step s12 alert stating the white_1x2 is missing."
+  },
+  {
+   "claim": "The missing brick leaves the back wall join unbridged.",
+   "supported": true,
+   "evidence": "Step s12\u2019s purpose is to bridge the back\u2011wall join; the brick is missing per the missed_step alert."
+  },
+  {
+   "claim": "Steps s1 through s11 were added without alerts.",
+   "supported": true,
+   "evidence": "Steps done with no alert (right part, place and order): s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11."
+  }
+ ]
+}

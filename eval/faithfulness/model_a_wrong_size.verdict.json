@@ -1,0 +1,32 @@
+{
+ "dropped": 0,
+ "restored": 0,
+ "error": "",
+ "claims": [
+  {
+   "claim": "The model was completed.",
+   "supported": true,
+   "evidence": "Outcome: finished"
+  },
+  {
+   "claim": "An incorrect brick was placed at the first step.",
+   "supported": true,
+   "evidence": "Alert t=1.5 wrong_brick s1: That is a red_1x2 at (0,0) on layer 0, but step s1 needs a red_2x4 there."
+  },
+  {
+   "claim": "At 0:01.5, a red_1x2 brick was added at (0,0) on layer 0, rotated 90\u00b0.",
+   "supported": true,
+   "evidence": "t=1.5 ADD red_1x2 @ (0,0,L0,rot90)"
+  },
+  {
+   "claim": "The brick does not match the required red_2x4 for step s1.",
+   "supported": true,
+   "evidence": "Alert t=1.5 wrong_brick s1: ... step s1 needs a red_2x4 there."
+  },
+  {
+   "claim": "Steps s2 through s12 were placed without alerts.",
+   "supported": true,
+   "evidence": "Steps done with no alert (right part, place and order): s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12"
+  }
+ ]
+}

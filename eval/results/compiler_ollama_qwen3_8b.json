@@ -1,0 +1,193 @@
+{
+ "summary": {
+  "entries": 16,
+  "compile_failures": 9,
+  "step_accuracy": 1.0,
+  "order_precision": 0.9722222222222222,
+  "order_recall": 1.0,
+  "hard_dependency_recall": 1.0,
+  "constraint_accuracy": 0.6666666666666666,
+  "constraint_precision": 0.85,
+  "move_agreement": 0.7462222222222222,
+  "error_taxonomy": {
+   "wrong_part": 0,
+   "wrong_pose": 0,
+   "missed": 0,
+   "hallucinated": 0,
+   "missed_rule": 3,
+   "hallucinated_rule": 2
+  }
+ },
+ "entries": {
+  "jigsaw_border_first": {
+   "steps": 24,
+   "step_accuracy": 1.0,
+   "errors": {
+    "wrong_part": [],
+    "wrong_pose": [],
+    "missed": [],
+    "hallucinated": []
+   },
+   "order": {
+    "tp": 176,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "hard_dependencies": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "optional_accuracy": 1.0
+  },
+  "jigsaw_rows": {
+   "steps": 20,
+   "step_accuracy": 1.0,
+   "errors": {
+    "wrong_part": [],
+    "wrong_pose": [],
+    "missed": [],
+    "hallucinated": []
+   },
+   "order": {
+    "tp": 150,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "hard_dependencies": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "optional_accuracy": 1.0
+  },
+  "jigsaw_sky_first": {
+   "steps": 30,
+   "step_accuracy": 1.0,
+   "errors": {
+    "wrong_part": [],
+    "wrong_pose": [],
+    "missed": [],
+    "hallucinated": []
+   },
+   "order": {
+    "tp": 288,
+    "fp": 36,
+    "fn": 0,
+    "precision": 0.8888888888888888,
+    "recall": 1.0
+   },
+   "hard_dependencies": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "optional_accuracy": 1.0
+  },
+  "jigsaw_free": {
+   "steps": 12,
+   "step_accuracy": 1.0,
+   "errors": {
+    "wrong_part": [],
+    "wrong_pose": [],
+    "missed": [],
+    "hallucinated": []
+   },
+   "order": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "hard_dependencies": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "optional_accuracy": 1.0
+  },
+  "jenga_standard": {
+   "rules": 4,
+   "constraint_accuracy": 1.0,
+   "constraint_precision": 0.8,
+   "errors": {
+    "missed_rule": [],
+    "hallucinated_rule": [
+     "c5: occupancy(dst.layer, dst.slot) == 0"
+    ]
+   },
+   "same_code": 4,
+   "move_agreement": 1.0,
+   "terminal_match": [
+    "game_over"
+   ],
+   "terminal_expected": [
+    "game_over"
+   ]
+  },
+  "jenga_house_rules": {
+   "rules": 3,
+   "constraint_accuracy": 1.0,
+   "constraint_precision": 0.75,
+   "errors": {
+    "missed_rule": [],
+    "hallucinated_rule": [
+     "c2: hands_in_contact >= 1"
+    ]
+   },
+   "same_code": 3,
+   "move_agreement": 1.0,
+   "terminal_match": [
+    "game_over"
+   ],
+   "terminal_expected": [
+    "game_over"
+   ]
+  },
+  "jenga_free_top": {
+   "rules": 3,
+   "constraint_accuracy": 0.0,
+   "constraint_precision": 1.0,
+   "errors": {
+    "missed_rule": [
+     "c1 (illegal_source_layer)",
+     "c2 (two_handed_move)",
+     "c3 (not_on_top)"
+    ],
+    "hallucinated_rule": []
+   },
+   "same_code": 0,
+   "move_agreement": 0.23866666666666667,
+   "terminal_match": [
+    "game_over"
+   ],
+   "terminal_expected": [
+    "game_over"
+   ]
+  }
+ },
+ "failed": {
+  "lego_bench": "spec failed validation after one repair round (2 problem(s))",
+  "lego_tower": "spec failed validation after one repair round (7 problem(s))",
+  "lego_bridge": "spec failed validation after one repair round (7 problem(s))",
+  "lego_letter_l": "spec failed validation after one repair round (8 problem(s))",
+  "lego_wall": "spec failed validation after one repair round (5 problem(s))",
+  "lego_table": "spec failed validation after one repair round (6 problem(s))",
+  "lego_frame": "spec failed validation after one repair round (3 problem(s))",
+  "lego_stairs": "spec failed validation after one repair round (2 problem(s))",
+  "jenga_sides_only": "spec failed validation after one repair round (3 problem(s))"
+ }
+}

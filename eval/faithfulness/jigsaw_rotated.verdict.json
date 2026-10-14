@@ -1,0 +1,27 @@
+{
+ "dropped": 0,
+ "restored": 0,
+ "error": "",
+ "claims": [
+  {
+   "claim": "The jigsaw was completed, but one piece was rotated incorrectly.",
+   "supported": true,
+   "evidence": "Outcome: finished; Alert at t=24.0 wrong_rotation r2c2 indicating the piece was turned 90 degrees."
+  },
+  {
+   "claim": "Piece r2c2 was added with a 90-degree rotation at 0:24.0.",
+   "supported": true,
+   "evidence": "t=24.0 ADD piece r2c2 @ (2,2,L0,rot90) and alert line \"t=24.0 wrong_rotation r2c2 [alert]: The piece r2c2 is in the right place, row 2, column 2, but turned 90 degrees\"."
+  },
+  {
+   "claim": "All 12 pieces were placed.",
+   "supported": true,
+   "evidence": "Steps completed: 12 of 12 and the 12 ADD entries from t=1.5 to t=29.0 covering pieces r0c0, r0c3, r2c0, r2c3, r0c1, r0c2, r1c0, r1c3, r2c1, r2c2, r1c1, r1c2."
+  },
+  {
+   "claim": "11 pieces were placed without any alerts.",
+   "supported": true,
+   "evidence": "Steps done with no alert: r0c0, r0c3, r2c0, r2c3, r0c1, r0c2, r1c0, r1c3, r2c1, r1c1, r1c2 (11 pieces) and only r2c2 was flagged by an alert."
+  }
+ ]
+}

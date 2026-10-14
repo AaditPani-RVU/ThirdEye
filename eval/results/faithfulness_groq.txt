@@ -1,0 +1,23 @@
+session                    claims  unsup  dropped  restored
+jenga_fouls                     8      0        0         0
+jigsaw_correct                  3      0        0         0
+jigsaw_early_interior           4      0        0         0
+jigsaw_foreign                  3      0        0         0
+jigsaw_misplaced                4      1        0         0
+    unsupported: The piece was in the wrong position, so the puzzle could not be completed correctly until it was moved. (Log records the wrong position and later correction, but does not explicitly state that the puzzle could not be completed correctly until the piece was moved.)
+jigsaw_missing                  4      1        0         0
+    unsupported: The puzzle remains incomplete because the piece at row 1, column 2 is missing. (Outcome: finished (log indicates the session finished despite missing piece))
+jigsaw_rotated                  4      0        0         0
+model_a_correct                 2      0        0         0
+model_a_extra                   5      1        0         0
+    unsupported: Steps s1 through s12 were completed without alerts. (Alerts list includes an alert at t=16.5 (extra_part), so the session did have an alert.)
+model_a_offset                  7      1        0         0
+    unsupported: This may affect the bridge join in the back wall (The log does not state any effect on the bridge join; it only describes the required placement)
+model_a_removed                 8      0        0         0
+model_a_rotated                 6      0        0         0
+model_a_skip                    7      0        0         0
+model_a_swap                    6      0        0         0
+model_a_wrong_color             4      0        0         0
+model_a_wrong_size              5      0        0         0
+
+4 of 80 claims unsupported (5.0%; target <= 5%); 0 finding(s) dropped, 0 alert(s) restored; 0 report(s) failed

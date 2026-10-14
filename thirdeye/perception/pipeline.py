@@ -58,6 +58,12 @@ class Timings:
     def add(self, stage: str, seconds: float) -> None:
         self.samples[stage].append(seconds * 1000)
 
+    def summary(self) -> dict[str, dict[str, float]]:
+        """Per stage: median and p95 ms and the sample count, for the session log."""
+        return {stage: {"median_ms": round(float(np.median(ms)), 2),
+                        "p95_ms": round(float(np.percentile(ms, 95)), 2), "n": len(ms)}
+                for stage, ms in self.samples.items() if ms}
+
     def table(self) -> str:
         rows = [f"{'stage':<12} {'median ms':>10} {'p95 ms':>8} {'n':>6}"]
         for stage, ms in self.samples.items():

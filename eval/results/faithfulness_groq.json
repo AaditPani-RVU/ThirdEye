@@ -1,0 +1,11 @@
+{
+ "writer": "groq:openai/gpt-oss-120b",
+ "judge": "groq:openai/gpt-oss-120b",
+ "reports": 16,
+ "failed": 0,
+ "claims": 80,
+ "unsupported": 4,
+ "unsupported_rate": 0.05,
+ "findings_dropped": 0,
+ "alerts_restored": 0
+}

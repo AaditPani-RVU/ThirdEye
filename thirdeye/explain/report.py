@@ -115,6 +115,13 @@ def digest(record: SessionRecord) -> str:
     ]
     if record.kind != "constraints":
         lines.append(f"Steps completed: {len(done)} of {len(steps)}")
+        by: dict[str, list[str]] = {}
+        for c in steps:
+            by.setdefault(c.status, []).append(c.id)
+        names = {"done": "done with no alert (right part, place and order)",
+                 "error": "flagged by an alert", "pending": "never done",
+                 "active": "in progress at the end"}
+        lines += [f"Steps {names.get(k, k)}: {', '.join(v)}" for k, v in by.items()]
     moves = sum(1 for e in record.log if e.kind == "event" and e.detail.startswith("MOVE"))
     if moves:
         lines.append(f"Moves made: {moves}")
@@ -145,6 +152,10 @@ Rules:
 - `consequence`: one sentence on why it matters for the task.
 - `headline`: one sentence on how the session went overall.
 - `went_well`: one or two sentences, or empty if nothing did.
+- The headline and `went_well` state only what the log records: which steps
+  were done or flagged, counts, alerts, how the session ended. Never describe
+  how something was done (smoothly, quickly, carefully), timing against any
+  expectation, intentions, or causes and effects the log does not state.
 - `advice`: at most three short, specific tips drawn from the findings.
 - Warnings are suspicions, not certainties: say "may have".
 """
@@ -186,7 +197,7 @@ def with_llm(record: SessionRecord, llm) -> Report:
         body = ReportBody.model_validate_json(raw)
     except ValidationError:
         report = plain(record)
-        report.author = f"{llm.model} (unreadable answer; plain report used)"
+        report.author = f"{getattr(llm, 'name', llm.model)} (unreadable answer; plain report used)"
         return report
     kept, rejected, cited = [], [], []
     for f in body.findings:
@@ -200,7 +211,7 @@ def with_llm(record: SessionRecord, llm) -> Report:
     kept += [Finding(t=a.t, code=a.code, what_happened=a.text, consequence="")
              for a in restored]
     body = body.model_copy(update={"findings": kept})
-    return Report(record, body, rejected=rejected, restored=restored, author=llm.model)
+    return Report(record, body, rejected=rejected, restored=restored, author=getattr(llm, "name", llm.model))
 
 
 def _schema() -> dict[str, Any]:
@@ -223,9 +234,9 @@ def main(argv: list[str] | None = None) -> int:
         print(digest(record))
         return 0
     if args.llm:
-        from thirdeye.compiler.compile import DEFAULT_MODEL, ClaudeLLM
+        from thirdeye.compiler.llm import make_llm
 
-        report = with_llm(record, ClaudeLLM(model=args.model or DEFAULT_MODEL, max_tokens=2000))
+        report = with_llm(record, make_llm(args.model, max_tokens=4000))
     else:
         report = plain(record)
     text = report.markdown()

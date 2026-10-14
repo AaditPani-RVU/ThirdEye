@@ -36,3 +36,9 @@ eval/sessions/
 
 # office lock files
 .~lock.*#
+
+# local server store, web build output
+eval/store/
+web/node_modules/
+web/dist/
+web/.env.production

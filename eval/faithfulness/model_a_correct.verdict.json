@@ -1,0 +1,17 @@
+{
+ "dropped": 0,
+ "restored": 0,
+ "error": "",
+ "claims": [
+  {
+   "claim": "All 12 steps were completed without any alerts.",
+   "supported": true,
+   "evidence": "Steps completed: 12 of 12; Alerts: none"
+  },
+  {
+   "claim": "All steps were performed and logged in order.",
+   "supported": true,
+   "evidence": "What the camera saw, in order: timestamps increase from t=1.5 to t=29.0, showing each step sequentially"
+  }
+ ]
+}

@@ -159,7 +159,7 @@ async function api(path, body) {
 async function fill() {
   for (const [id, path] of [["scenario", "/api/scenarios"], ["spec", "/api/specs"]]) {
     const names = await api(path);
-    $(id).innerHTML = names.map((n) => `<option>${esc(n)}</option>`).join("");
+    $(id).innerHTML = names.map((n) => `<option>${esc(n.name || n)}</option>`).join("");
   }
 }
 

@@ -1,9 +1,142 @@
 # Third Eye — Requirements Specification
 
 **Project:** Third Eye  
-**Version:** 1.0 · **Date:** 2026-09-18 · **Status:** Draft for team review
+**Version:** 2.0 · **Date:** 2026-10-14 · **Status:** Revised for jigsaw + Jenga (v1.0 of 2026-09-18 was LEGO-first)
 
-**Source of truth:** `Third_Eye_Project_Plan.md` (plan of 2026-09-18). Every requirement below traces to a plan section; where this document and the plan disagree, the plan wins and this document is a bug.
+**Source of truth:** `Third_Eye_Project_Plan.md` (plan v2.0 of 2026-10-14). Where this document and the plan disagree, the plan wins and this document is a bug.
+
+**How to read v2.0.** Section 0 is the change record: what the switch from LEGO to jigsaw + Jenga, and the mandatory cloud deployment, did to the requirements. Under change control CC-1, no requirement ID was deleted or renumbered: LEGO-specific requirements are marked **superseded** (parked with LEGO), changed ones are restated in Section 0 and the restatement wins, and new requirements carry new IDs. Sections 1-15 below are v1.0 text, still in force wherever Section 0 does not override them.
+
+---
+
+## 0. Change record v2.0 (2026-10-14)
+
+### 0.1 Scope
+
+| Procedure | Spec form | Sensor | Role in v2.0 |
+| --- | --- | --- | --- |
+| **Jigsaw puzzle** | DAG of phases (corners -> edges -> interior, or as the instructions say) | One overhead webcam, ArUco board | Must-have ordered procedure |
+| **Jenga game** | Constraint set, no order | iPhone Pro LiDAR via Record3D, 1-2 corners | Must-have generality result (was S4/S5) |
+| LEGO assembly | DAG | Webcam + YOLO | **Parked**: code and tests kept, no further work |
+
+The CS3235 requirements doc (2026-09-25) makes **cloud deployment mandatory**; it is added as FR-CLD-*.
+
+### 0.2 Superseded (parked with LEGO)
+
+FR-CMP-2 (LEGO step fields; the jigsaw form is FR-CMP-12), FR-CAL-5, FR-PER-3, FR-PER-4, FR-PER-5, FR-STA-2, FR-STA-5, FR-CAL-6 (replaced by FR-CAL-8), FR-TMP-1..6 (demoted to **C**, see 0.4), DR-LEG-1..9 (replaced by DR-JIG-*), DR-JEN-1 and DR-JEN-4 (replaced by DR-JEN-5), HW-1..HW-12 LEGO items (HW-3, HW-5, HW-8; others restated in 0.6), SW-3, SW-4, SW-6, SW-7, SW-12, SW-13, EV-DET-1..3, EV-STA-1, EV-STA-2, EV-ERR-2, EV-AB-5, EV-AB-7, EV-GEN-1, EV-GEN-2 (restated as EV-GEN-5/6), MG-1..MG-12 (dates; replaced by the plan v2.0 timeline), DL-4 and DL-5 (restated in 0.7).
+
+### 0.3 Changed
+
+| ID | v2.0 wording | Pri |
+| --- | --- | --- |
+| FR-PER-2 | Parts shall be identified every frame: jigsaw pieces by matching against the box picture (FR-PER-7). The LEGO YOLO detector is parked. | M |
+| FR-STA-3 | A placement (jigsaw piece, or LEGO brick) counts once it has been still for about 0.5 s after the hand leaves, and is emitted as ADD / REMOVE. | M |
+| FR-STA-7 | The Jenga lattice shall hold per-layer occupancy (the tower may grow above 18 layers) from one or two **corner depth** views (FR-PER-11), not two orthogonal side views. | M |
+| FR-CMP-4 | The compiler shall compile a rulebook into the constraint form (unchanged), now for the must-have Jenga demo. | M |
+| FR-CMP-5 | Unchanged; now M. | M |
+| FR-CHK-5 | **Wrong part**: a placed piece that belongs in another cell, or matches no cell of the box picture (foreign piece). | M |
+| FR-CHK-6 | **Wrong position / rotation** and extra / removed part, for jigsaw pieces. | M |
+| FR-CHK-10 | Jenga rules (illegal source layer, layer started early, two-handed move, wrong replacement, collapse): now M. | M |
+| FR-UI-1 | The live view shall show the jigsaw board (cells placed / flagged / next) or the Jenga legality panel; the camera overlay is optional and stays on the edge unless sent explicitly. | M |
+| FR-UI-4 | The camera is read on the edge laptop; only protocol messages (text) go to the server. | M |
+| FR-SYS-2 | Switching procedure needs no code change: a spec file and, for a jigsaw, the box picture. YAML configs are not used. | S |
+| SW-8 | LLM: **Groq `openai/gpt-oss-120b`** primary; Ollama (local) fallback; Gemini and Claude supported. Chosen by a `provider:model` string. | M |
+| SW-11 | Frontend: React + Vite (TypeScript), served by the backend; Firebase Hosting optional. | M |
+| NFR-COST-1 | LLM spend stays at zero on the Groq free tier (rate limits waited out); cloud within the free tier / credits; budget alert at INR 500. | M |
+| NFR-REL-1 | A full jigsaw session and a full Jenga game shall each complete without a crash in >= 9 of 10 runs. | M |
+| NFR-REL-2 | <= 1.0 false alerts per fully correct jigsaw run. | M |
+| EV-ERR-1 | Precision >= 0.8 at recall >= 0.8 per error type, jigsaw test puzzle. | M |
+| EV-STA-3 | Jenga slot occupancy >= 95% vs hand-labelled states: now M. | M |
+| EV-JEN-1 | Jenga violation P/R per rule >= 0.8: now M. | M |
+
+### 0.4 Demoted
+
+| ID | Change |
+| --- | --- |
+| FR-TMP-1..6, EV-SEG-1, EV-BL-1, EV-BL-3, EV-AB-1..3 | Step recognizer and its benchmark: **M -> C**. For both procedures the state diff says what happened; the CS3235 doc lists the recognizer as a Could. |
+| FR-CMP-8 | Teach-by-demonstration: S6 -> C. |
+
+### 0.5 New requirements
+
+**Jigsaw**
+
+| ID | Requirement | Pri | Verify |
+| --- | --- | --- | --- |
+| FR-CMP-12 | The compiler shall turn a jigsaw instruction sheet into **phases** expressed as selectors over the grid (corners, edges, rows, cell ranges, remaining); positions come from the board size, never from the LLM. | M | T |
+| FR-CAL-9 | Four ArUco markers around the jigsaw board shall give a pixel-to-cell homography from any reasonable camera angle. | M | T, D |
+| FR-PER-7 | Pieces shall be identified, with rotation, by matching the centre of each occupied cell against the box picture (texture + chroma); no detector training. | M | T, A |
+| FR-PER-9 | A reading's confidence shall be its margin over the runner-up match; low-confidence readings produce warnings only (FR-CHK-9). | M | T |
+| FR-PER-10 | Occupancy shall be decided against a photo of the empty board, robust to overall brightness changes. | M | T |
+
+**Jenga with depth**
+
+| ID | Requirement | Pri | Verify |
+| --- | --- | --- | --- |
+| FR-CAL-8 | Each corner camera's pose of the tower shall be recovered from ArUco markers on the mat (two visible suffice). | M | T |
+| FR-PER-8 | Colour + depth shall be read from Record3D, both `.r3d` recordings and the live USB stream. | M | T, D |
+| FR-PER-11 | Slot occupancy shall be read from depth by comparing measured with expected depth on each visible block end face; two opposite corners shall be merged so that a block pushed partway in reads as moving, not empty. | M | T, A |
+| FR-PER-12 | Hands shall be masked out of the depth map, and hands touching the tower's outline counted for the one-hand rule. | M | T |
+| FR-STA-10 | The lattice shall take a reading only when settled, hand-free and unchanged for a few frames, carrying the most hands seen since the previous reading. | M | T |
+
+**LLM**
+
+| ID | Requirement | Pri | Verify |
+| --- | --- | --- | --- |
+| FR-LLM-1 | All LLM use shall go through one backend interface selected by `provider:model`; keys from the environment or an untracked `.env`. | M | T, I |
+| FR-LLM-2 | Rate-limit answers shall be waited out, not counted as failed compiles. | S | T |
+| FR-EXP-3 | Every finding in an LLM report shall cite a logged alert by code and time; uncited findings are dropped and counted; red alerts the model omits are restored. | M | T |
+
+**Cloud deployment (CS3235 doc section 11)**
+
+| ID | Requirement | Pri | Verify |
+| --- | --- | --- | --- |
+| FR-CLD-1 | The web app shall be reachable at a public Google Cloud URL (FastAPI on Cloud Run, region asia-south1). | M | D |
+| FR-CLD-2 | Users shall sign in with Google (Firebase Auth); the server shall verify ID tokens; listed accounts may compile and save, others may watch, replay and read history. | M | T |
+| FR-CLD-3 | Spec metadata, sessions and every alert shall be stored in Firestore; spec JSON and session logs in Cloud Storage. | M | T |
+| FR-CLD-4 | The edge laptop shall authenticate with a per-device token and push protocol messages and the final log; the UI shall show when the edge is offline. | M | T |
+| FR-CLD-5 | No video shall leave the edge laptop unless explicitly enabled. | M | I |
+| FR-CLD-6 | Replays of scripted scenarios shall run in the cloud with no hardware. | M | T, D |
+| FR-CLD-7 | Secrets shall be held in Secret Manager on Cloud Run. | M | I |
+| FR-UI-7 | History: list of sessions, each with its alert timeline and report; "No sessions yet" when empty. | M | T, D |
+| FR-UI-8 | Procedures: compile from pasted text, view / edit / re-validate the JSON, save; a failed compile shows the validator's problems and offers a retry. | M | D |
+| FR-UI-9 | Banners: edge offline, calibration lost (alerts paused), compile failed. | S | D |
+
+**Evaluation**
+
+| ID | Question | Metric | Target | Pri |
+| --- | --- | --- | --- | --- |
+| EV-JIG-1 | Is the jigsaw state right? | Placement accuracy (piece + cell + rotation) per placement | >= 90% | M |
+| EV-JIG-2 | Unseen puzzle (tier 1) | Error P/R per type | P >= 0.7 at R >= 0.7 | S |
+| EV-EXP-1 | Is the report faithful? | Unsupported claims (LLM judge + manual check of 10) | <= 5% | S |
+| EV-LAT-2 | Usable live? | Pooled over >= 10 sessions from the session logs | >= 15 FPS, whole frame <= 40 ms | M |
+| EV-BL-4 | Baseline | Colour-only piece matching vs the matcher | Reported | M |
+| EV-BL-5 | Baseline | Single RGB camera, no depth, vs LiDAR for Jenga | Reported | M |
+| EV-GEN-5 | Tier 1 | A second jigsaw from its box photo + instructions alone | Reported | S |
+| EV-GEN-6 | Tier 2/3 | Jenga state + rules through the same checker | Reported | M |
+
+### 0.6 Hardware (v2.0)
+
+| ID | Item | Qty | Pri |
+| --- | --- | --- | --- |
+| HW-13 | USB webcam, overhead stand | 1 | M |
+| HW-14 | Jigsaw puzzles, 12-48 pieces, with box pictures | 2-3 | M |
+| HW-15 | Printed ArUco markers: 4 for the board, 4 for the Jenga mat | 2 sets | M |
+| HW-16 | iPhone Pro with LiDAR + Record3D app | 1 (2 for the two-corner rig) | M (second: S) |
+| HW-17 | Jenga set, plain mat, even lighting | 1 | M |
+| HW-18 | Demo laptop (edge node); no GPU required | 1 | M |
+
+### 0.7 Data and deliverables (v2.0)
+
+| ID | Requirement | Pri |
+| --- | --- | --- |
+| DR-JIG-1 | 30-40 jigsaw runs, 3-4 people, two puzzles (one for tuning, one test-only), about half with one planted error (missing, misplaced, rotated, foreign, interior before border). | M |
+| DR-JIG-2 | Labels in the fixed format of `thirdeye/eval/labels.py`, including placements. | M |
+| DR-JEN-5 | 12-15 Jenga games as `.r3d`, planted fouls of each rule, labels with moves. | M |
+| DL-7 | Demo video: a correct jigsaw with the board filling in; each jigsaw error caught; a second puzzle from its box photo alone; a Jenga game with fouls called live. | M |
+| DL-8 | Live demo: a panel member tries to cheat at the jigsaw and at Jenga. | M |
+| DL-9 | The deployed public URL. | M |
+
+---
 
 ---
 
@@ -618,4 +751,4 @@ The project passes its minimum bar when every **M** requirement is verified. In 
 
 ---
 
-*Third Eye Requirements Specification v1.0 — 2026-09-18. Derived from `Third_Eye_Project_Plan.md`.*
+*Third Eye Requirements Specification v2.0 — 2026-10-14 (v1.0 2026-09-18). Derived from `Third_Eye_Project_Plan.md`; Section 0 overrides sections 1-15.*

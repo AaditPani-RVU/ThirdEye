@@ -1,0 +1,22 @@
+{
+ "dropped": 0,
+ "restored": 0,
+ "error": "",
+ "claims": [
+  {
+   "claim": "All 12 steps of the jigsaw were completed with no alerts.",
+   "supported": true,
+   "evidence": "Outcome: finished; Steps completed: 12 of 12; Alerts (time in seconds, code, step, the rule's own words): - none"
+  },
+  {
+   "claim": "All 12 pieces were placed as recorded.",
+   "supported": true,
+   "evidence": "What the camera saw, in order: - t=1.5 ADD piece r0c0 @ (0,0,L0,rot0) - t=4.0 ADD piece r0c3 @ (3,0,L0,rot0) - t=6.5 ADD piece r2c0 @ (0,2,L0,rot0) - t=9.0 ADD piece r2c3 @ (3,2,L0,rot0) - t=11.5 ADD piece r0c1 @ (1,0,L0,rot0) - t=14.0 ADD piece r0c2 @ (2,0,L0,rot0) - t=16.5 ADD piece r1c0 @ (0,1,L0,rot0) - t=19.0 ADD piece r1c3 @ (3,1,L0,rot0) - t=21.5 ADD piece r2c1 @ (1,2,L0,rot0) - t=24.0 ADD piece r2c2 @ (2,2,L0,rot0) - t=26.5 ADD piece r1c1 @ (1,1,L0,rot0) - t=29.0 ADD piece r1c2 @ (2,1,L0,rot0)"
+  },
+  {
+   "claim": "No alerts were triggered.",
+   "supported": true,
+   "evidence": "Alerts (time in seconds, code, step, the rule's own words): - none"
+  }
+ ]
+}

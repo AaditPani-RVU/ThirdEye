@@ -1,0 +1,27 @@
+{
+ "dropped": 0,
+ "restored": 0,
+ "error": "",
+ "claims": [
+  {
+   "claim": "The jigsaw was completed.",
+   "supported": true,
+   "evidence": "Outcome: finished; Steps completed: 12 of 12; all 12 pieces were placed according to the log."
+  },
+  {
+   "claim": "One piece was placed out of order.",
+   "supported": true,
+   "evidence": "Steps flagged by an alert: r1c1; alert line \"out_of_order r1c1\" at t=11.5."
+  },
+  {
+   "claim": "At time 11.5 seconds, piece r1c1 was placed at row 1, column 1.",
+   "supported": true,
+   "evidence": "t=11.5 ADD piece r1c1 @ (1,1,L0,rot0)"
+  },
+  {
+   "claim": "All 12 pieces were placed, completing the puzzle.",
+   "supported": true,
+   "evidence": "Steps completed: 12 of 12; the log lists 12 ADD entries for pieces r0c0, r0c3, r2c0, r2c3, r1c1, r0c1, r0c2, r1c0, r1c3, r2c1, r2c2, r1c2."
+  }
+ ]
+}

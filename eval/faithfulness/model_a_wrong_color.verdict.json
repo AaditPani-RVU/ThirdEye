@@ -1,0 +1,27 @@
+{
+ "dropped": 0,
+ "restored": 0,
+ "error": "",
+ "claims": [
+  {
+   "claim": "All steps were completed.",
+   "supported": true,
+   "evidence": "Outcome: finished; Steps completed: 12 of 12"
+  },
+  {
+   "claim": "One brick was placed incorrectly.",
+   "supported": true,
+   "evidence": "Alert at t=16.5 for step s7 indicating a wrong brick (green_1x4 instead of yellow_1x4)"
+  },
+  {
+   "claim": "At time 0:16.5 a green 1x4 brick was added at (4,4) on layer 0 instead of the required yellow 1x4 brick.",
+   "supported": true,
+   "evidence": "t=16.5 ADD green_1x4 @ (4,4,L0,rot90) and alert: \"That is a green_1x4 at (4,4) on layer 0, but step s7 needs a yellow_1x4 there\""
+  },
+  {
+   "claim": "Steps s1, s2, s3, s4, s5, s6, s8, s9, s10, s11, and s12 were performed without alerts.",
+   "supported": true,
+   "evidence": "Steps done with no alert (right part, place and order): s1, s2, s3, s4, s5, s6, s8, s9, s10, s11, s12"
+  }
+ ]
+}
