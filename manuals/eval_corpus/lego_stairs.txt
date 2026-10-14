@@ -1,0 +1,7 @@
+# Staircase. Baseplate: 12 x 6 studs.
+# Every brick lies lengthwise, left to right, against the bottom edge of the plate.
+
+1. Lay a grey 2x6 brick in the bottom-left corner of the plate.
+2. On top of it, lay a grey 2x4 brick flush with its right end.
+3. On top of that, place a grey 2x2 brick flush with the right end.
+4. Top the staircase with a red 2x2 brick exactly on the grey 2x2.

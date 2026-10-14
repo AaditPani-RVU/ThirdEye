@@ -1,5 +1,5 @@
 [project]
-name = "stepwise"
+name = "thirdeye"
 version = "0.1.0"
 description = "Real-time detection of procedural errors from video using LLM-generated task graphs"
 requires-python = ">=3.11"
@@ -21,6 +21,8 @@ live = [
     "mediapipe>=0.10",
     "fastapi>=0.110",
     "uvicorn[standard]>=0.29",
+    "pyliblzfse>=0.4",              # Record3D .r3d depth frames (Jenga)
+    "record3d>=1.4",                # Record3D live USB stream (Jenga)
 ]
 # Offline compile + explain (FR-CMP-10: never on the per-frame path)
 llm = [
@@ -36,14 +38,14 @@ train = [
     "wandb>=0.16",
     "tqdm>=4.66",
 ]
-dev = ["pytest>=8.0", "ruff>=0.4", "mypy>=1.9", "types-PyYAML"]
+dev = ["pytest>=8.0", "ruff>=0.4", "mypy>=1.9", "types-PyYAML", "httpx>=0.27"]
 
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["stepwise*"]
+include = ["thirdeye*"]
 
 [tool.ruff]
 line-length = 100
@@ -54,5 +56,5 @@ testpaths = ["tests"]
 
 [[tool.mypy.overrides]]
 # Optional extras imported lazily (`llm`, `live`); neither ships type information.
-module = ["anthropic", "anthropic.*", "mediapipe", "mediapipe.*"]
+module = ["anthropic", "anthropic.*", "mediapipe", "mediapipe.*", "liblzfse", "record3d"]
 ignore_missing_imports = true

@@ -23,14 +23,14 @@ from pathlib import Path
 
 import yaml
 
-from stepwise.compiler.schema import DagSpec, PartRef, Pose, Step, load_spec
+from thirdeye.compiler.schema import DagSpec, Part, PartRef, Pose, Step, load_spec
 
 #: Seconds a hand is over the plate per step, and the pause after it.
 REACH_S = 1.0
 PAUSE_S = 1.5
 
 
-def brick(part: PartRef, pose: Pose) -> str:
+def brick(part: Part, pose: Pose) -> str:
     return f"{part} @ {pose.x},{pose.y},{pose.layer},{pose.rot}"
 
 
@@ -54,27 +54,35 @@ class Build:
         self.t += REACH_S + PAUSE_S
 
 
+def _brick_of(step: Step) -> PartRef:
+    assert isinstance(step.part, PartRef), "main() admits stud-grid specs only"
+    return step.part
+
+
 def _other_color(spec: DagSpec, step: Step) -> PartRef:
     """A part the same size in a colour no step uses at this size."""
-    used = {s.part.color for s in spec.steps if s.part.size == step.part.size}
+    size = _brick_of(step).size
+    used = {_brick_of(s).color for s in spec.steps if _brick_of(s).size == size}
     for color in ("green", "orange", "pink", "grey", "purple"):
         if color not in used:
-            return PartRef(color=color, size=step.part.size)
+            return PartRef(color=color, size=size)
     raise ValueError("no spare colour")  # pragma: no cover
 
 
 def _other_size(step: Step) -> PartRef:
+    part = _brick_of(step)
     for size in ("1x2", "2x2", "1x4", "2x4", "2x3"):
-        if size != step.part.size:
-            return PartRef(color=step.part.color, size=size)
+        if size != part.size:
+            return PartRef(color=part.color, size=size)
     raise ValueError("no spare size")  # pragma: no cover
 
 
-def _fits(spec: DagSpec, part: PartRef, pose: Pose) -> bool:
+def _fits(spec: DagSpec, part: Part, pose: Pose) -> bool:
     w, h = part.dims
     if pose.rot in (90, 270):
         w, h = h, w
-    return pose.x + w <= spec.baseplate.studs_x and pose.y + h <= spec.baseplate.studs_y
+    cols, rows = spec.extent
+    return pose.x + w <= cols and pose.y + h <= rows
 
 
 def scenarios(spec: DagSpec) -> dict[str, tuple[str, list[dict], list[str]]]:
@@ -159,7 +167,8 @@ def scenarios(spec: DagSpec) -> dict[str, tuple[str, list[dict], list[str]]]:
         [f"wrong_rotation {turned.id}"],
     )
 
-    stray = f"purple_1x2 @ {spec.baseplate.studs_x - 2},{spec.baseplate.studs_y - 1},0,0"
+    cols, rows = spec.extent
+    stray = f"purple_1x2 @ {cols - 2},{rows - 1},0,0"
     order2: list[str | Step] = list(steps)
     order2.insert(n // 2, stray)
     out["extra"] = ("A brick no step uses is added mid-build.", run(order2), ["extra_part "])
@@ -183,8 +192,8 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
 
     spec = load_spec(args.spec)
-    if not isinstance(spec, DagSpec):
-        ap.error("planted-error scenarios are generated for DAG specs only")
+    if not isinstance(spec, DagSpec) or spec.state_model != "stud_grid":
+        ap.error("planted-error scenarios are generated for LEGO DAG specs only")
     args.out.mkdir(parents=True, exist_ok=True)
     stem = args.spec.stem
     for name, (desc, keyframes, expect) in scenarios(spec).items():

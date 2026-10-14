@@ -1,0 +1,109 @@
+{
+ "procedure": "lego_letter_l",
+ "kind": "dag",
+ "state_model": "stud_grid",
+ "baseplate": {
+  "studs_x": 10,
+  "studs_y": 10
+ },
+ "steps": [
+  {
+   "id": "s1",
+   "instruction": "Place a green 2x4 brick in the bottom-left corner of the plate, standing upright: its long side runs away from you along the left edge.",
+   "part": {
+    "color": "green",
+    "size": "2x4"
+   },
+   "pose": {
+    "x": 0,
+    "y": 0,
+    "layer": 0,
+    "rot": 0
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [],
+   "optional": false,
+   "expected_duration_s": [
+    3.0,
+    20.0
+   ]
+  },
+  {
+   "id": "s2",
+   "instruction": "Place a second green 2x4 brick directly behind the first, continuing the upright line along the left edge.",
+   "part": {
+    "color": "green",
+    "size": "2x4"
+   },
+   "pose": {
+    "x": 0,
+    "y": 4,
+    "layer": 0,
+    "rot": 0
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [
+    "s1"
+   ],
+   "optional": false,
+   "expected_duration_s": [
+    3.0,
+    20.0
+   ]
+  },
+  {
+   "id": "s3",
+   "instruction": "Place a green 2x4 brick lying lengthwise along the bottom edge, immediately to the right of the first brick.",
+   "part": {
+    "color": "green",
+    "size": "2x4"
+   },
+   "pose": {
+    "x": 2,
+    "y": 0,
+    "layer": 0,
+    "rot": 90
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [
+    "s2"
+   ],
+   "optional": false,
+   "expected_duration_s": [
+    3.0,
+    20.0
+   ]
+  },
+  {
+   "id": "s4",
+   "instruction": "Place a green 2x2 brick at the right end of that brick, against the bottom edge, to finish the foot of the L.",
+   "part": {
+    "color": "green",
+    "size": "2x2"
+   },
+   "pose": {
+    "x": 6,
+    "y": 0,
+    "layer": 0,
+    "rot": 0
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [
+    "s3"
+   ],
+   "optional": false,
+   "expected_duration_s": [
+    3.0,
+    20.0
+   ]
+  }
+ ],
+ "phases": [],
+ "provenance": {
+  "compiler_version": "ground-truth",
+  "model": "hand",
+  "source": "",
+  "compiled_at": "",
+  "repaired": false
+ }
+}

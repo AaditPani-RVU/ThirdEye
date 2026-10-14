@@ -1,0 +1,5 @@
+Row by row
+
+This puzzle is easiest built from the top down. Complete the whole top row first.
+Then build the second row, then the third, and finish with the bottom row. Do not
+start a row until the one above it is finished.

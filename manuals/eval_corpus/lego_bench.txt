@@ -1,0 +1,8 @@
+# Bench. Baseplate: 8 x 8 studs.
+# Coordinates are studs counted from the bottom-left corner of the plate, as (x, y):
+# x runs left to right, y runs away from you.
+
+1. Place a blue 2x2 brick in the bottom-left corner of the plate.
+2. Place a second blue 2x2 brick against the bottom edge, to the right of the first, leaving a gap two studs wide between them.
+3. Lay a red 2x6 brick lengthwise, left to right, across the tops of both blue bricks, flush with the left side of the first one.
+4. Stand a white 1x2 brick on the right end of the red brick, covering its last column of studs, with its long side running away from you.

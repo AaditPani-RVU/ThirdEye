@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from stepwise.compiler.schema import ConstraintSpec, DagSpec, PartRef, Pose
-from stepwise.events import Event, Slot
-from stepwise.session import Session, state_for
-from stepwise.state.jenga.lattice import TowerLattice, full_tower
-from stepwise.state.lego.build_state import BuildState
-from stepwise.state.lego.grid import Reading
+from thirdeye.compiler.schema import ConstraintSpec, DagSpec, PartRef, Pose
+from thirdeye.events import Event, Slot
+from thirdeye.session import Session, state_for
+from thirdeye.state.jenga.lattice import TowerLattice, full_tower
+from thirdeye.state.lego.build_state import BuildState
+from thirdeye.state.lego.grid import Reading
 
 
 def see(session: Session, t: float, steps, hands: bool = False) -> list:
@@ -53,10 +53,29 @@ def test_a_skipped_step_is_caught_at_the_end(flat_spec: DagSpec) -> None:
 
 
 def test_out_of_order_fires_through_the_tracker(flat_spec: DagSpec) -> None:
+    """One clear frame after the commit: the checker first looks again for the
+    earlier brick, in case our stability filter has not committed it yet."""
     session = Session(flat_spec)
     for t in (0.0, 1.0):
-        alerts = see(session, t, [flat_spec.steps[1]])
+        assert see(session, t, [flat_spec.steps[1]]) == []
+    alerts = see(session, 1.1, [flat_spec.steps[1]])
     assert [a.code for a in alerts] == ["out_of_order"]
+    assert alerts[0].t == 1.0   # timed at the placement, not at the re-read
+
+
+def test_an_earlier_brick_not_yet_committed_is_not_out_of_order(flat_spec: DagSpec) -> None:
+    """s1 is on the plate but a dropped detection restarted its stability timer,
+    so s2 commits first. The re-read finds s1: our miss, not the user's."""
+    session = Session(flat_spec)
+    s1, s2 = flat_spec.steps[0], flat_spec.steps[1]
+    see(session, 0.0, [s2])
+    see(session, 0.3, [s1, s2])            # s1 appears late in our eyes
+    alerts = see(session, 0.5, [s1, s2])   # s2 commits; s1 not yet stable
+    alerts += see(session, 0.6, [s1, s2])  # the re-read
+    alerts += see(session, 1.5, [s1, s2])  # s1 finally commits
+    assert alerts == []
+    assert session.checker.perception_misses == ["s1"]
+    assert {sid: st for sid, st, _ in session.checklist()}["s1"] == "done"
 
 
 def test_bricks_settling_together_are_judged_bottom_up(dag_spec: DagSpec) -> None:

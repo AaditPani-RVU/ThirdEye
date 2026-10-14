@@ -1,0 +1,10 @@
+Jenga variant: "Outside In"
+
+All the normal rules apply: one hand at a time, take blocks only from below the
+highest complete level, and put them on top, completing the top level before a new
+one is started. Blocks may only go into the empty places on the top of the tower.
+
+The twist: you may only ever pull a side block. The middle block of a level is
+never allowed to be taken.
+
+The game ends when the tower falls.

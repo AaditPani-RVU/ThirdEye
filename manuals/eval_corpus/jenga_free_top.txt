@@ -1,0 +1,7 @@
+Relaxed Jenga (for younger players)
+
+- Take any block from below the highest complete level. One hand only.
+- Put it back anywhere on top of the tower: you can add it to the unfinished top
+  level or start a new level, whichever you like. You do not have to finish a level
+  before starting the next one.
+- When the tower falls, the game is over.

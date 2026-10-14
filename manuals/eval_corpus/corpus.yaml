@@ -1,0 +1,47 @@
+# The compiler eval corpus: one manual, one ground-truth spec each.
+# Written by scripts/make_eval_corpus.py; route = how the manual is compiled.
+entries:
+- name: lego_bench
+  route: dag
+- name: lego_tower
+  route: dag
+- name: lego_bridge
+  route: dag
+- name: lego_letter_l
+  route: dag
+- name: lego_wall
+  route: dag
+- name: lego_table
+  route: dag
+- name: lego_frame
+  route: dag
+- name: lego_stairs
+  route: dag
+- name: jigsaw_border_first
+  route: jigsaw
+  board:
+  - 6
+  - 4
+- name: jigsaw_rows
+  route: jigsaw
+  board:
+  - 5
+  - 4
+- name: jigsaw_sky_first
+  route: jigsaw
+  board:
+  - 6
+  - 5
+- name: jigsaw_free
+  route: jigsaw
+  board:
+  - 4
+  - 3
+- name: jenga_standard
+  route: constraints
+- name: jenga_house_rules
+  route: constraints
+- name: jenga_sides_only
+  route: constraints
+- name: jenga_free_top
+  route: constraints

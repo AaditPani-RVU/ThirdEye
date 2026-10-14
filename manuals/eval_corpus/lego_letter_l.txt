@@ -1,0 +1,6 @@
+# The letter L. Baseplate: 10 x 10 studs. Everything sits flat on the plate.
+
+1. Place a green 2x4 brick in the bottom-left corner of the plate, standing upright: its long side runs away from you along the left edge.
+2. Place a second green 2x4 brick directly behind the first, continuing the upright line along the left edge.
+3. Place a green 2x4 brick lying lengthwise along the bottom edge, immediately to the right of the first brick.
+4. Place a green 2x2 brick at the right end of that brick, against the bottom edge, to finish the foot of the L.

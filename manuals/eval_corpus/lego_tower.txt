@@ -1,0 +1,8 @@
+# Totem. Baseplate: 8 x 8 studs.
+# Coordinates are studs from the bottom-left corner, (x, y); x runs left to right, y away from you.
+
+1. Place a yellow 2x2 brick in the centre of the plate, with its bottom-left stud at (3, 3).
+2. Stack a red 2x2 brick exactly on top of the yellow one.
+3. Stack a blue 2x2 brick exactly on top of the red one.
+4. Stack a green 2x2 brick exactly on top of the blue one.
+5. Finish the totem with a white 2x2 brick on the very top.

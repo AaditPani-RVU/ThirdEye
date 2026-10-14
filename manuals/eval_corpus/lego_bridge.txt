@@ -1,0 +1,11 @@
+# Bridge. Baseplate: 12 x 8 studs.
+# Coordinates are studs from the bottom-left corner, (x, y); x runs left to right, y away from you.
+# Steps 1-2 build the left pillar and steps 3-4 the right pillar. You may build the
+# pillars in either order, but each pillar goes bottom brick first.
+
+1. Place a black 2x2 brick with its bottom-left stud at (2, 3).
+2. Stack a second black 2x2 brick on top of it.
+3. Place a black 2x2 brick with its bottom-left stud at (8, 3).
+4. Stack a second black 2x2 brick on top of that one.
+5. Lay a red 2x8 brick lengthwise, left to right, on top of both pillars, so that its left end sits on the left pillar and its right end on the right pillar.
+6. Stand a yellow 1x2 brick on the bridge, over the fourth column of studs counted from the bridge's left end, with its long side running away from you.

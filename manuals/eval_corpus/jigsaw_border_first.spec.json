@@ -1,0 +1,544 @@
+{
+ "procedure": "jigsaw_border_first",
+ "kind": "dag",
+ "state_model": "piece_grid",
+ "board": {
+  "cols": 6,
+  "rows": 4
+ },
+ "steps": [
+  {
+   "id": "r0c0",
+   "instruction": "Place piece r0c0 at the top-left corner",
+   "part": {
+    "piece": "r0c0"
+   },
+   "pose": {
+    "x": 0,
+    "y": 0,
+    "layer": 0,
+    "rot": 0
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [],
+   "optional": false,
+   "expected_duration_s": [
+    2.0,
+    60.0
+   ],
+   "phase": "corners"
+  },
+  {
+   "id": "r0c5",
+   "instruction": "Place piece r0c5 at the top-right corner",
+   "part": {
+    "piece": "r0c5"
+   },
+   "pose": {
+    "x": 5,
+    "y": 0,
+    "layer": 0,
+    "rot": 0
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [],
+   "optional": false,
+   "expected_duration_s": [
+    2.0,
+    60.0
+   ],
+   "phase": "corners"
+  },
+  {
+   "id": "r3c0",
+   "instruction": "Place piece r3c0 at the bottom-left corner",
+   "part": {
+    "piece": "r3c0"
+   },
+   "pose": {
+    "x": 0,
+    "y": 3,
+    "layer": 0,
+    "rot": 0
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [],
+   "optional": false,
+   "expected_duration_s": [
+    2.0,
+    60.0
+   ],
+   "phase": "corners"
+  },
+  {
+   "id": "r3c5",
+   "instruction": "Place piece r3c5 at the bottom-right corner",
+   "part": {
+    "piece": "r3c5"
+   },
+   "pose": {
+    "x": 5,
+    "y": 3,
+    "layer": 0,
+    "rot": 0
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [],
+   "optional": false,
+   "expected_duration_s": [
+    2.0,
+    60.0
+   ],
+   "phase": "corners"
+  },
+  {
+   "id": "r0c1",
+   "instruction": "Place piece r0c1 at the top edge",
+   "part": {
+    "piece": "r0c1"
+   },
+   "pose": {
+    "x": 1,
+    "y": 0,
+    "layer": 0,
+    "rot": 0
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [],
+   "optional": false,
+   "expected_duration_s": [
+    2.0,
+    60.0
+   ],
+   "phase": "edges"
+  },
+  {
+   "id": "r0c2",
+   "instruction": "Place piece r0c2 at the top edge",
+   "part": {
+    "piece": "r0c2"
+   },
+   "pose": {
+    "x": 2,
+    "y": 0,
+    "layer": 0,
+    "rot": 0
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [],
+   "optional": false,
+   "expected_duration_s": [
+    2.0,
+    60.0
+   ],
+   "phase": "edges"
+  },
+  {
+   "id": "r0c3",
+   "instruction": "Place piece r0c3 at the top edge",
+   "part": {
+    "piece": "r0c3"
+   },
+   "pose": {
+    "x": 3,
+    "y": 0,
+    "layer": 0,
+    "rot": 0
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [],
+   "optional": false,
+   "expected_duration_s": [
+    2.0,
+    60.0
+   ],
+   "phase": "edges"
+  },
+  {
+   "id": "r0c4",
+   "instruction": "Place piece r0c4 at the top edge",
+   "part": {
+    "piece": "r0c4"
+   },
+   "pose": {
+    "x": 4,
+    "y": 0,
+    "layer": 0,
+    "rot": 0
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [],
+   "optional": false,
+   "expected_duration_s": [
+    2.0,
+    60.0
+   ],
+   "phase": "edges"
+  },
+  {
+   "id": "r1c0",
+   "instruction": "Place piece r1c0 at the left edge",
+   "part": {
+    "piece": "r1c0"
+   },
+   "pose": {
+    "x": 0,
+    "y": 1,
+    "layer": 0,
+    "rot": 0
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [],
+   "optional": false,
+   "expected_duration_s": [
+    2.0,
+    60.0
+   ],
+   "phase": "edges"
+  },
+  {
+   "id": "r1c5",
+   "instruction": "Place piece r1c5 at the right edge",
+   "part": {
+    "piece": "r1c5"
+   },
+   "pose": {
+    "x": 5,
+    "y": 1,
+    "layer": 0,
+    "rot": 0
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [],
+   "optional": false,
+   "expected_duration_s": [
+    2.0,
+    60.0
+   ],
+   "phase": "edges"
+  },
+  {
+   "id": "r2c0",
+   "instruction": "Place piece r2c0 at the left edge",
+   "part": {
+    "piece": "r2c0"
+   },
+   "pose": {
+    "x": 0,
+    "y": 2,
+    "layer": 0,
+    "rot": 0
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [],
+   "optional": false,
+   "expected_duration_s": [
+    2.0,
+    60.0
+   ],
+   "phase": "edges"
+  },
+  {
+   "id": "r2c5",
+   "instruction": "Place piece r2c5 at the right edge",
+   "part": {
+    "piece": "r2c5"
+   },
+   "pose": {
+    "x": 5,
+    "y": 2,
+    "layer": 0,
+    "rot": 0
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [],
+   "optional": false,
+   "expected_duration_s": [
+    2.0,
+    60.0
+   ],
+   "phase": "edges"
+  },
+  {
+   "id": "r3c1",
+   "instruction": "Place piece r3c1 at the bottom edge",
+   "part": {
+    "piece": "r3c1"
+   },
+   "pose": {
+    "x": 1,
+    "y": 3,
+    "layer": 0,
+    "rot": 0
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [],
+   "optional": false,
+   "expected_duration_s": [
+    2.0,
+    60.0
+   ],
+   "phase": "edges"
+  },
+  {
+   "id": "r3c2",
+   "instruction": "Place piece r3c2 at the bottom edge",
+   "part": {
+    "piece": "r3c2"
+   },
+   "pose": {
+    "x": 2,
+    "y": 3,
+    "layer": 0,
+    "rot": 0
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [],
+   "optional": false,
+   "expected_duration_s": [
+    2.0,
+    60.0
+   ],
+   "phase": "edges"
+  },
+  {
+   "id": "r3c3",
+   "instruction": "Place piece r3c3 at the bottom edge",
+   "part": {
+    "piece": "r3c3"
+   },
+   "pose": {
+    "x": 3,
+    "y": 3,
+    "layer": 0,
+    "rot": 0
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [],
+   "optional": false,
+   "expected_duration_s": [
+    2.0,
+    60.0
+   ],
+   "phase": "edges"
+  },
+  {
+   "id": "r3c4",
+   "instruction": "Place piece r3c4 at the bottom edge",
+   "part": {
+    "piece": "r3c4"
+   },
+   "pose": {
+    "x": 4,
+    "y": 3,
+    "layer": 0,
+    "rot": 0
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [],
+   "optional": false,
+   "expected_duration_s": [
+    2.0,
+    60.0
+   ],
+   "phase": "edges"
+  },
+  {
+   "id": "r1c1",
+   "instruction": "Place piece r1c1 at row 1, column 1",
+   "part": {
+    "piece": "r1c1"
+   },
+   "pose": {
+    "x": 1,
+    "y": 1,
+    "layer": 0,
+    "rot": 0
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [],
+   "optional": false,
+   "expected_duration_s": [
+    2.0,
+    60.0
+   ],
+   "phase": "interior"
+  },
+  {
+   "id": "r1c2",
+   "instruction": "Place piece r1c2 at row 1, column 2",
+   "part": {
+    "piece": "r1c2"
+   },
+   "pose": {
+    "x": 2,
+    "y": 1,
+    "layer": 0,
+    "rot": 0
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [],
+   "optional": false,
+   "expected_duration_s": [
+    2.0,
+    60.0
+   ],
+   "phase": "interior"
+  },
+  {
+   "id": "r1c3",
+   "instruction": "Place piece r1c3 at row 1, column 3",
+   "part": {
+    "piece": "r1c3"
+   },
+   "pose": {
+    "x": 3,
+    "y": 1,
+    "layer": 0,
+    "rot": 0
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [],
+   "optional": false,
+   "expected_duration_s": [
+    2.0,
+    60.0
+   ],
+   "phase": "interior"
+  },
+  {
+   "id": "r1c4",
+   "instruction": "Place piece r1c4 at row 1, column 4",
+   "part": {
+    "piece": "r1c4"
+   },
+   "pose": {
+    "x": 4,
+    "y": 1,
+    "layer": 0,
+    "rot": 0
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [],
+   "optional": false,
+   "expected_duration_s": [
+    2.0,
+    60.0
+   ],
+   "phase": "interior"
+  },
+  {
+   "id": "r2c1",
+   "instruction": "Place piece r2c1 at row 2, column 1",
+   "part": {
+    "piece": "r2c1"
+   },
+   "pose": {
+    "x": 1,
+    "y": 2,
+    "layer": 0,
+    "rot": 0
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [],
+   "optional": false,
+   "expected_duration_s": [
+    2.0,
+    60.0
+   ],
+   "phase": "interior"
+  },
+  {
+   "id": "r2c2",
+   "instruction": "Place piece r2c2 at row 2, column 2",
+   "part": {
+    "piece": "r2c2"
+   },
+   "pose": {
+    "x": 2,
+    "y": 2,
+    "layer": 0,
+    "rot": 0
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [],
+   "optional": false,
+   "expected_duration_s": [
+    2.0,
+    60.0
+   ],
+   "phase": "interior"
+  },
+  {
+   "id": "r2c3",
+   "instruction": "Place piece r2c3 at row 2, column 3",
+   "part": {
+    "piece": "r2c3"
+   },
+   "pose": {
+    "x": 3,
+    "y": 2,
+    "layer": 0,
+    "rot": 0
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [],
+   "optional": false,
+   "expected_duration_s": [
+    2.0,
+    60.0
+   ],
+   "phase": "interior"
+  },
+  {
+   "id": "r2c4",
+   "instruction": "Place piece r2c4 at row 2, column 4",
+   "part": {
+    "piece": "r2c4"
+   },
+   "pose": {
+    "x": 4,
+    "y": 2,
+    "layer": 0,
+    "rot": 0
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [],
+   "optional": false,
+   "expected_duration_s": [
+    2.0,
+    60.0
+   ],
+   "phase": "interior"
+  }
+ ],
+ "phases": [
+  {
+   "id": "corners",
+   "name": "the corners",
+   "after": []
+  },
+  {
+   "id": "edges",
+   "name": "the edges",
+   "after": [
+    "corners"
+   ]
+  },
+  {
+   "id": "interior",
+   "name": "the middle",
+   "after": [
+    "corners",
+    "edges"
+   ]
+  }
+ ],
+ "provenance": {
+  "compiler_version": "ground-truth",
+  "model": "hand",
+  "source": "",
+  "compiled_at": "",
+  "repaired": false
+ }
+}

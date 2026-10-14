@@ -1,0 +1,11 @@
+# Table. Baseplate: 10 x 10 studs.
+# Coordinates are studs from the bottom-left corner, (x, y); x runs left to right, y away from you.
+# Steps 1 to 4 place the four legs and may be done in any order.
+
+1. Place a black 2x2 brick, the front-left leg, with its bottom-left stud at (2, 2).
+2. Place a black 2x2 brick, the front-right leg, at (6, 2).
+3. Place a black 2x2 brick, the back-left leg, at (2, 6).
+4. Place a black 2x2 brick, the back-right leg, at (6, 6).
+5. Lay a brown 2x6 brick lengthwise, left to right, across the two front legs, starting at (2, 2).
+6. Lay a second brown 2x6 brick lengthwise across the two back legs, starting at (2, 6).
+7. Optional: put a yellow 1x1 brick on the front half of the table top at (4, 2) as a cup.

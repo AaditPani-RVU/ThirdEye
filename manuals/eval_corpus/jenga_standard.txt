@@ -1,0 +1,15 @@
+JENGA - How to play
+
+Setup: build the tower 18 levels high, three blocks per level, each level at right
+angles to the one below.
+
+On your turn, take one block from any level below the highest completed level. Use
+only one hand at a time; you may switch hands, but never have two hands touching the
+tower at once.
+
+Place the block on the top of the tower, crosswise to the blocks beneath it. Finish
+the top level - all three blocks - before starting a new level above it. A block may
+only be put down in an empty spot on the top of the tower, never pushed back into
+the body of the tower.
+
+The game ends when the tower falls.

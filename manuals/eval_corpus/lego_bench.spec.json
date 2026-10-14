@@ -1,0 +1,115 @@
+{
+ "procedure": "lego_bench",
+ "kind": "dag",
+ "state_model": "stud_grid",
+ "baseplate": {
+  "studs_x": 8,
+  "studs_y": 8
+ },
+ "steps": [
+  {
+   "id": "s1",
+   "instruction": "Place a blue 2x2 brick in the bottom-left corner of the plate.",
+   "part": {
+    "color": "blue",
+    "size": "2x2"
+   },
+   "pose": {
+    "x": 0,
+    "y": 0,
+    "layer": 0,
+    "rot": 0
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [],
+   "optional": false,
+   "expected_duration_s": [
+    3.0,
+    20.0
+   ]
+  },
+  {
+   "id": "s2",
+   "instruction": "Place a second blue 2x2 brick against the bottom edge, to the right of the first, leaving a gap two studs wide between them.",
+   "part": {
+    "color": "blue",
+    "size": "2x2"
+   },
+   "pose": {
+    "x": 4,
+    "y": 0,
+    "layer": 0,
+    "rot": 0
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [
+    "s1"
+   ],
+   "optional": false,
+   "expected_duration_s": [
+    3.0,
+    20.0
+   ]
+  },
+  {
+   "id": "s3",
+   "instruction": "Lay a red 2x6 brick lengthwise, left to right, across the tops of both blue bricks, flush with the left side of the first one.",
+   "part": {
+    "color": "red",
+    "size": "2x6"
+   },
+   "pose": {
+    "x": 0,
+    "y": 0,
+    "layer": 1,
+    "rot": 90
+   },
+   "hard_depends_on": [
+    "s1",
+    "s2"
+   ],
+   "soft_depends_on": [
+    "s1",
+    "s2"
+   ],
+   "optional": false,
+   "expected_duration_s": [
+    3.0,
+    20.0
+   ]
+  },
+  {
+   "id": "s4",
+   "instruction": "Stand a white 1x2 brick on the right end of the red brick, covering its last column of studs, with its long side running away from you.",
+   "part": {
+    "color": "white",
+    "size": "1x2"
+   },
+   "pose": {
+    "x": 5,
+    "y": 0,
+    "layer": 2,
+    "rot": 0
+   },
+   "hard_depends_on": [
+    "s3"
+   ],
+   "soft_depends_on": [
+    "s3"
+   ],
+   "optional": false,
+   "expected_duration_s": [
+    3.0,
+    20.0
+   ]
+  }
+ ],
+ "phases": [],
+ "provenance": {
+  "compiler_version": "ground-truth",
+  "model": "hand",
+  "source": "",
+  "compiled_at": "",
+  "repaired": false
+ }
+}

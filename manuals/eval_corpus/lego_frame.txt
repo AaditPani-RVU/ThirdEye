@@ -1,0 +1,8 @@
+# Window frame. Baseplate: 8 x 8 studs.
+# Coordinates are studs from the bottom-left corner, (x, y); x runs left to right, y away from you.
+
+1. Place a red 1x4 brick pointing away from you, with its nearest stud at (0, 0).
+2. Place a second red 1x4 brick pointing away from you, with its nearest stud at (3, 0).
+3. Lay a blue 1x4 brick left to right across the far ends of both red bricks, starting above (0, 3).
+4. Lay a blue 1x4 brick left to right across the near ends of both red bricks, starting above (0, 0).
+5. Place a white 2x2 brick flat on the plate inside the frame, with its bottom-left stud at (1, 1).

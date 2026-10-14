@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Third Eye</title>
+<!--
+  The demo UI (FR-UI-1..3, FR-UI-6). One file, no build step: it only draws
+  what the server sends over /ws (thirdeye/server/protocol.py, v1) and starts
+  or stops sessions through /api. Nothing about a session is decided here.
+-->
+<style>
+  :root {
+    --bg: #f6f5f2; --panel: #ffffff; --ink: #1d2230; --muted: #6a7080; --line: #e3e1dc;
+    --accent: #b4532a; --ok: #2f7d4a; --warn: #b8860b; --bad: #c0392b; --idle: #c9c6bf;
+    --slot: #d9b98c; --slot-edge: #9c7a4c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14161b; --panel: #1c1f26; --ink: #e7e5e0; --muted: #9096a3; --line: #2c3038;
+      --accent: #e0864f; --ok: #4fb173; --warn: #e0b23c; --bad: #ec6454; --idle: #3a3e48;
+      --slot: #b08a5a; --slot-edge: #7a5d36;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { display: flex; align-items: center; gap: 12px; padding: 12px 20px;
+           border-bottom: 1px solid var(--line); background: var(--panel); }
+  header h1 { font-size: 17px; margin: 0; letter-spacing: .2px; }
+  header .eye { color: var(--accent); }
+  #conn { margin-left: auto; font-size: 12px; color: var(--muted); }
+  #conn::before { content: "●"; margin-right: 6px; color: var(--bad); }
+  #conn.on::before { color: var(--ok); }
+  main { display: grid; grid-template-columns: 280px 1fr 360px; gap: 16px; padding: 16px 20px; }
+  @media (max-width: 1100px) { main { grid-template-columns: 1fr; } }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+            padding: 14px 16px; min-width: 0; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted);
+       margin: 0 0 10px; font-weight: 600; }
+  label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; }
+  select, input { width: 100%; padding: 7px 8px; border: 1px solid var(--line); border-radius: 6px;
+                  background: var(--bg); color: var(--ink); font: inherit; }
+  .row { display: flex; gap: 8px; margin-top: 12px; }
+  button { flex: 1; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--line);
+           background: var(--bg); color: var(--ink); font: inherit; cursor: pointer; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button:disabled { opacity: .5; cursor: default; }
+  details summary { cursor: pointer; color: var(--muted); font-size: 12px; margin-top: 14px; }
+  #meta { font-size: 13px; color: var(--muted); margin-bottom: 10px; min-height: 20px; }
+  #meta b { color: var(--ink); }
+  #view { display: grid; place-items: center; min-height: 360px; }
+  #frame { max-width: 100%; border-radius: 6px; display: none; }
+  .board { display: grid; gap: 3px; }
+  .cell { aspect-ratio: 1; border-radius: 4px; background: var(--idle); display: grid;
+          place-items: center; font-size: 11px; color: var(--muted); min-width: 34px; }
+  .cell.done { background: var(--ok); color: #fff; }
+  .cell.error { background: var(--bad); color: #fff; }
+  .cell.next { outline: 2px dashed var(--accent); outline-offset: 1px; color: var(--accent); }
+  .tower { display: flex; flex-direction: column-reverse; gap: 2px; }
+  .layer { display: flex; align-items: center; gap: 2px; }
+  .layer .n { width: 26px; font-size: 10px; color: var(--muted); text-align: right; margin-right: 4px; }
+  .blk { width: 38px; height: 13px; border-radius: 2px; border: 1px solid var(--slot-edge);
+         background: var(--slot); }
+  .blk.empty { background: transparent; border-style: dashed; border-color: var(--idle); }
+  .blk.legal { background: transparent; border: 2px solid var(--ok); }
+  .layer.tcl .n { color: var(--accent); font-weight: 600; }
+  .legend { font-size: 12px; color: var(--muted); margin-top: 10px; text-align: center; }
+  ol#check { list-style: none; padding: 0; margin: 0; max-height: 420px; overflow: auto; }
+  #check li { display: flex; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--line);
+              font-size: 13px; }
+  #check .mark { width: 18px; flex: none; text-align: center; }
+  #check .done .mark { color: var(--ok); } #check .error .mark { color: var(--bad); }
+  #check .active .mark { color: var(--warn); }
+  #check .id { font-family: ui-monospace, monospace; color: var(--muted); flex: none; width: 44px; }
+  #alerts { display: flex; flex-direction: column; gap: 8px; max-height: 520px; overflow: auto; }
+  .alert { border-left: 3px solid var(--bad); padding: 6px 10px; background: var(--bg);
+           border-radius: 0 6px 6px 0; }
+  .alert.warning { border-color: var(--warn); }
+  .alert .top { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+  .alert .code { font-weight: 600; color: var(--bad); }
+  .alert.warning .code { color: var(--warn); }
+  .empty-note { color: var(--muted); font-size: 13px; }
+  #report { grid-column: 1 / -1; display: none; }
+  #report .md h1 { font-size: 16px; } #report .md h2 { font-size: 13px; color: var(--ink); }
+  #report .md ul { padding-left: 18px; margin: 6px 0; }
+  #report .md hr { border: 0; border-top: 1px solid var(--line); margin: 14px 0; }
+  #summary { font-family: ui-monospace, monospace; font-size: 12px; color: var(--muted);
+             white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="eye">●</span> Third Eye</h1>
+  <span id="source" class="empty-note"></span>
+  <span id="conn">disconnected</span>
+</header>
+<main>
+  <section>
+    <h2>Session</h2>
+    <label for="scenario">Replay a scenario</label>
+    <select id="scenario"></select>
+    <label for="speed">Speed</label>
+    <select id="speed">
+      <option value="1">1× (real time)</option><option value="2" selected>2×</option>
+      <option value="5">5×</option><option value="0">instant</option>
+    </select>
+    <label for="noise">Detector noise <span class="empty-note">(optional)</span></label>
+    <input id="noise" placeholder="e.g. drop=0.1,ghost=0.05">
+    <div class="row">
+      <button class="primary" id="play">Replay</button>
+      <button id="stop">Stop</button>
+    </div>
+    <details>
+      <summary>Camera or recorded video</summary>
+      <label for="spec">Spec</label><select id="spec"></select>
+      <label for="video">Video file (repo path; blank = camera 0)</label>
+      <input id="video" placeholder="data/raw/jigsaw_R001.mp4">
+      <label for="reference">Box picture (jigsaw)</label>
+      <input id="reference" placeholder="data/box.jpg">
+      <div class="row"><button id="cam">Start</button></div>
+    </details>
+    <p id="err" class="empty-note" style="color:var(--bad)"></p>
+  </section>
+
+  <section>
+    <h2>Live view</h2>
+    <div id="meta">Pick a scenario and press Replay.</div>
+    <div id="view"><img id="frame" alt="camera"><div id="shape"></div></div>
+  </section>
+
+  <section>
+    <h2>Alerts</h2>
+    <div id="alerts"><p class="empty-note">None yet.</p></div>
+    <h2 style="margin-top:18px" id="checkhead">Checklist</h2>
+    <ol id="check"></ol>
+  </section>
+
+  <section id="report">
+    <h2>Report</h2>
+    <div id="summary"></div>
+    <div class="md" id="md"></div>
+  </section>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let kind = null, alertsSeen = 0;
+
+async function api(path, body) {
+  $("err").textContent = "";
+  const res = await fetch(path, body === undefined ? {} :
+    {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) $("err").textContent = data.detail || res.statusText;
+  return data;
+}
+
+async function fill() {
+  for (const [id, path] of [["scenario", "/api/scenarios"], ["spec", "/api/specs"]]) {
+    const names = await api(path);
+    $(id).innerHTML = names.map((n) => `<option>${esc(n)}</option>`).join("");
+  }
+}
+
+$("play").onclick = () => api("/api/replay", {scenario: $("scenario").value,
+  speed: parseFloat($("speed").value), noise: $("noise").value});
+$("stop").onclick = () => api("/api/stop", {});
+$("cam").onclick = () => api("/api/camera", {spec: $("spec").value,
+  video: $("video").value || null, camera: 0, reference: $("reference").value || null});
+
+let rulesList = null;
+function checklist(rows, next) {
+  if (rulesList) {   // a rulebook: show what is enforced, not a one-row checklist
+    $("check").innerHTML = rulesList.map((r) => `<li><span class="mark">§</span>` +
+      `<span class="id">${esc(r.id)}</span><span>${esc(r.text)}</span></li>`).join("");
+    return;
+  }
+  const marks = {done: "✓", error: "!", active: "~", pending: "·"};
+  $("check").innerHTML = rows.map((r) => `<li class="${r.status}"><span class="mark">${marks[r.status]}</span>` +
+    `<span class="id">${esc(r.id)}</span><span>${esc(r.instruction)}</span></li>`).join("");
+  const cells = rows.filter((r) => /^r\d+c\d+$/.test(r.id));
+  if (kind === "dag" && cells.length === rows.length && !$("frame").src) board(rows, next);
+  else if (kind === "dag" && !$("frame").src && !$("shape").innerHTML)
+    $("shape").innerHTML = `<p class="empty-note">No board view for this procedure; follow the checklist.</p>`;
+}
+
+function board(rows, next) {
+  const pos = rows.map((r) => r.id.match(/^r(\d+)c(\d+)$/).slice(1).map(Number));
+  const nr = Math.max(...pos.map((p) => p[0])) + 1, nc = Math.max(...pos.map((p) => p[1])) + 1;
+  const byCell = {}; rows.forEach((r) => (byCell[r.id] = r));
+  let html = `<div class="board" style="grid-template-columns:repeat(${nc},minmax(34px,64px))">`;
+  for (let r = 0; r < nr; r++) for (let c = 0; c < nc; c++) {
+    const row = byCell[`r${r}c${c}`];
+    html += `<div class="cell ${row ? row.status : ""} ${next === `r${r}c${c}` ? "next" : ""}">r${r}c${c}</div>`;
+  }
+  $("shape").innerHTML = html + `</div><p class="legend">green placed · red flagged · dashed next</p>`;
+}
+
+function tower(t) {
+  const legal = new Set(t.legal_slots.map((s) => s.join(",")));
+  const height = Math.max(t.rows.length, ...t.legal_slots.map((s) => s[0] + 1));
+  let html = `<div class="tower">`;
+  for (let L = 0; L < height; L++) {
+    const row = t.rows[L] || [0, 0, 0];
+    html += `<div class="layer ${L === t.top_complete_layer ? "tcl" : ""}"><span class="n">${L}</span>` +
+      row.map((v, s) => `<span class="blk ${v ? "" : legal.has(`${L},${s}`) ? "legal" : "empty"}"></span>`).join("") + `</div>`;
+  }
+  $("shape").innerHTML = html + `</div><p class="legend">layer ${t.top_complete_layer} is the top complete layer — ` +
+    `take from below it · green outline: where the block may go</p>`;
+}
+
+function onMessage(m) {
+  if (m.type === "hello") {
+    kind = m.kind; alertsSeen = 0;
+    rulesList = m.rules && m.rules.length ? m.rules : null;
+    $("checkhead").textContent = rulesList ? "Rules in force" : "Checklist";
+    $("alerts").innerHTML = `<p class="empty-note">None yet.</p>`;
+    $("report").style.display = "none"; $("frame").style.display = "none"; $("frame").removeAttribute("src");
+    $("shape").innerHTML = ""; $("source").textContent = m.source;
+    $("meta").innerHTML = `<b>${esc(m.procedure)}</b> · ${m.kind === "constraints" ? "rulebook" : "steps"}`;
+    checklist(m.checklist, null);
+  } else if (m.type === "state") {
+    $("meta").innerHTML = $("meta").innerHTML.split(" · t=")[0] + ` · t=${m.t.toFixed(1)}s · ${m.progress}`;
+    checklist(m.checklist, m.next);
+    if (m.tower) tower(m.tower);
+  } else if (m.type === "alert") {
+    if (!alertsSeen++) $("alerts").innerHTML = "";
+    $("alerts").insertAdjacentHTML("afterbegin",
+      `<div class="alert ${m.severity}"><div class="top"><span class="code">${esc(m.code.replaceAll("_", " "))}` +
+      `${m.target && m.target !== "move" ? " · " + esc(m.target) : ""}</span><span>${m.t.toFixed(1)}s</span></div>${esc(m.text)}</div>`);
+  } else if (m.type === "frame") {
+    $("frame").src = "data:image/jpeg;base64," + m.jpeg; $("frame").style.display = "block";
+    $("shape").innerHTML = "";
+  } else if (m.type === "end") {
+    $("report").style.display = "block"; $("summary").textContent = m.summary;
+    $("md").innerHTML = markdown(m.report);
+  } else if (m.type === "error") {
+    $("err").textContent = m.message;
+  }
+}
+
+function markdown(text) {   // the report's small subset: headings, bullets, bold, rules
+  return text.split("\n").map((l) => {
+    const e = esc(l).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+    if (l.startsWith("# ")) return `<h1>${e.slice(2)}</h1>`;
+    if (l.startsWith("## ")) return `<h2>${e.slice(3)}</h2>`;
+    if (l.startsWith("- ")) return `<li>${e.slice(2)}</li>`;
+    if (l === "---") return "<hr>";
+    return l ? `<p>${e}</p>` : "";
+  }).join("").replace(/((?:<li>.*?<\/li>)+)/g, "<ul>$1</ul>");
+}
+
+function connect() {
+  const ws = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`);
+  ws.onopen = () => { $("conn").textContent = "connected"; $("conn").className = "on"; };
+  ws.onclose = () => { $("conn").textContent = "reconnecting…"; $("conn").className = ""; setTimeout(connect, 1500); };
+  ws.onmessage = (e) => { const m = JSON.parse(e.data); if (m.v === 1) onMessage(m); };
+}
+
+fill(); connect();
+</script>
+</body>
+</html>

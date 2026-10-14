@@ -1,0 +1,6 @@
+Sunset puzzle - tips
+
+Start with the sky: the top two rows are all orange and pink, so sort those pieces
+out and complete both rows before anything else. After the sky, lay the dark
+ground strip along the bottom row. Everything left over - the trees in between -
+goes in last.

@@ -1,0 +1,194 @@
+{
+ "procedure": "lego_wall",
+ "kind": "dag",
+ "state_model": "stud_grid",
+ "baseplate": {
+  "studs_x": 16,
+  "studs_y": 16
+ },
+ "steps": [
+  {
+   "id": "s1",
+   "instruction": "Lay a red 2x4 brick in the bottom-left corner.",
+   "part": {
+    "color": "red",
+    "size": "2x4"
+   },
+   "pose": {
+    "x": 0,
+    "y": 0,
+    "layer": 0,
+    "rot": 90
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [],
+   "optional": false,
+   "expected_duration_s": [
+    3.0,
+    20.0
+   ]
+  },
+  {
+   "id": "s2",
+   "instruction": "Lay a second red 2x4 brick directly to the right of the first.",
+   "part": {
+    "color": "red",
+    "size": "2x4"
+   },
+   "pose": {
+    "x": 4,
+    "y": 0,
+    "layer": 0,
+    "rot": 90
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [
+    "s1"
+   ],
+   "optional": false,
+   "expected_duration_s": [
+    3.0,
+    20.0
+   ]
+  },
+  {
+   "id": "s3",
+   "instruction": "Lay a third red 2x4 brick directly to the right of the second. This finishes the first course.",
+   "part": {
+    "color": "red",
+    "size": "2x4"
+   },
+   "pose": {
+    "x": 8,
+    "y": 0,
+    "layer": 0,
+    "rot": 90
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [
+    "s2"
+   ],
+   "optional": false,
+   "expected_duration_s": [
+    3.0,
+    20.0
+   ]
+  },
+  {
+   "id": "s4",
+   "instruction": "Start the second course: lay a white 2x4 brick on top of the wall, two studs in from the left end, so it straddles the joint between the first and second red bricks.",
+   "part": {
+    "color": "white",
+    "size": "2x4"
+   },
+   "pose": {
+    "x": 2,
+    "y": 0,
+    "layer": 1,
+    "rot": 90
+   },
+   "hard_depends_on": [
+    "s1",
+    "s2"
+   ],
+   "soft_depends_on": [
+    "s1",
+    "s2",
+    "s3"
+   ],
+   "optional": false,
+   "expected_duration_s": [
+    3.0,
+    20.0
+   ]
+  },
+  {
+   "id": "s5",
+   "instruction": "Lay another white 2x4 brick directly to the right of it on the second course, straddling the joint between the second and third red bricks.",
+   "part": {
+    "color": "white",
+    "size": "2x4"
+   },
+   "pose": {
+    "x": 6,
+    "y": 0,
+    "layer": 1,
+    "rot": 90
+   },
+   "hard_depends_on": [
+    "s2",
+    "s3"
+   ],
+   "soft_depends_on": [
+    "s2",
+    "s3",
+    "s4"
+   ],
+   "optional": false,
+   "expected_duration_s": [
+    3.0,
+    20.0
+   ]
+  },
+  {
+   "id": "s6",
+   "instruction": "Fill the gap at the left end of the second course with a white 2x2 brick.",
+   "part": {
+    "color": "white",
+    "size": "2x2"
+   },
+   "pose": {
+    "x": 0,
+    "y": 0,
+    "layer": 1,
+    "rot": 0
+   },
+   "hard_depends_on": [
+    "s1"
+   ],
+   "soft_depends_on": [
+    "s1",
+    "s5"
+   ],
+   "optional": false,
+   "expected_duration_s": [
+    3.0,
+    20.0
+   ]
+  },
+  {
+   "id": "s7",
+   "instruction": "Fill the gap at the right end of the second course with a white 2x2 brick.",
+   "part": {
+    "color": "white",
+    "size": "2x2"
+   },
+   "pose": {
+    "x": 10,
+    "y": 0,
+    "layer": 1,
+    "rot": 0
+   },
+   "hard_depends_on": [
+    "s3"
+   ],
+   "soft_depends_on": [
+    "s3",
+    "s6"
+   ],
+   "optional": false,
+   "expected_duration_s": [
+    3.0,
+    20.0
+   ]
+  }
+ ],
+ "phases": [],
+ "provenance": {
+  "compiler_version": "ground-truth",
+  "model": "hand",
+  "source": "",
+  "compiled_at": "",
+  "repaired": false
+ }
+}

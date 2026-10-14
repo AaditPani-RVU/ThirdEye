@@ -1,0 +1,10 @@
+# A brick wall in running bond. Baseplate: 16 x 16 studs.
+# All long bricks lie lengthwise, left to right, along the bottom edge of the plate.
+
+1. Lay a red 2x4 brick in the bottom-left corner.
+2. Lay a second red 2x4 brick directly to the right of the first.
+3. Lay a third red 2x4 brick directly to the right of the second. This finishes the first course.
+4. Start the second course: lay a white 2x4 brick on top of the wall, two studs in from the left end, so it straddles the joint between the first and second red bricks.
+5. Lay another white 2x4 brick directly to the right of it on the second course, straddling the joint between the second and third red bricks.
+6. Fill the gap at the left end of the second course with a white 2x2 brick.
+7. Fill the gap at the right end of the second course with a white 2x2 brick.

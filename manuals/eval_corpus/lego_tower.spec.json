@@ -1,0 +1,140 @@
+{
+ "procedure": "lego_tower",
+ "kind": "dag",
+ "state_model": "stud_grid",
+ "baseplate": {
+  "studs_x": 8,
+  "studs_y": 8
+ },
+ "steps": [
+  {
+   "id": "s1",
+   "instruction": "Place a yellow 2x2 brick in the centre of the plate, with its bottom-left stud at (3, 3).",
+   "part": {
+    "color": "yellow",
+    "size": "2x2"
+   },
+   "pose": {
+    "x": 3,
+    "y": 3,
+    "layer": 0,
+    "rot": 0
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [],
+   "optional": false,
+   "expected_duration_s": [
+    3.0,
+    20.0
+   ]
+  },
+  {
+   "id": "s2",
+   "instruction": "Stack a red 2x2 brick exactly on top of the yellow one.",
+   "part": {
+    "color": "red",
+    "size": "2x2"
+   },
+   "pose": {
+    "x": 3,
+    "y": 3,
+    "layer": 1,
+    "rot": 0
+   },
+   "hard_depends_on": [
+    "s1"
+   ],
+   "soft_depends_on": [
+    "s1"
+   ],
+   "optional": false,
+   "expected_duration_s": [
+    3.0,
+    20.0
+   ]
+  },
+  {
+   "id": "s3",
+   "instruction": "Stack a blue 2x2 brick exactly on top of the red one.",
+   "part": {
+    "color": "blue",
+    "size": "2x2"
+   },
+   "pose": {
+    "x": 3,
+    "y": 3,
+    "layer": 2,
+    "rot": 0
+   },
+   "hard_depends_on": [
+    "s2"
+   ],
+   "soft_depends_on": [
+    "s2"
+   ],
+   "optional": false,
+   "expected_duration_s": [
+    3.0,
+    20.0
+   ]
+  },
+  {
+   "id": "s4",
+   "instruction": "Stack a green 2x2 brick exactly on top of the blue one.",
+   "part": {
+    "color": "green",
+    "size": "2x2"
+   },
+   "pose": {
+    "x": 3,
+    "y": 3,
+    "layer": 3,
+    "rot": 0
+   },
+   "hard_depends_on": [
+    "s3"
+   ],
+   "soft_depends_on": [
+    "s3"
+   ],
+   "optional": false,
+   "expected_duration_s": [
+    3.0,
+    20.0
+   ]
+  },
+  {
+   "id": "s5",
+   "instruction": "Finish the totem with a white 2x2 brick on the very top.",
+   "part": {
+    "color": "white",
+    "size": "2x2"
+   },
+   "pose": {
+    "x": 3,
+    "y": 3,
+    "layer": 4,
+    "rot": 0
+   },
+   "hard_depends_on": [
+    "s4"
+   ],
+   "soft_depends_on": [
+    "s4"
+   ],
+   "optional": false,
+   "expected_duration_s": [
+    3.0,
+    20.0
+   ]
+  }
+ ],
+ "phases": [],
+ "provenance": {
+  "compiler_version": "ground-truth",
+  "model": "hand",
+  "source": "",
+  "compiled_at": "",
+  "repaired": false
+ }
+}

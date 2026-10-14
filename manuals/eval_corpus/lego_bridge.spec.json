@@ -1,0 +1,163 @@
+{
+ "procedure": "lego_bridge",
+ "kind": "dag",
+ "state_model": "stud_grid",
+ "baseplate": {
+  "studs_x": 12,
+  "studs_y": 8
+ },
+ "steps": [
+  {
+   "id": "s1",
+   "instruction": "Place a black 2x2 brick with its bottom-left stud at (2, 3).",
+   "part": {
+    "color": "black",
+    "size": "2x2"
+   },
+   "pose": {
+    "x": 2,
+    "y": 3,
+    "layer": 0,
+    "rot": 0
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [],
+   "optional": false,
+   "expected_duration_s": [
+    3.0,
+    20.0
+   ]
+  },
+  {
+   "id": "s2",
+   "instruction": "Stack a second black 2x2 brick on top of it.",
+   "part": {
+    "color": "black",
+    "size": "2x2"
+   },
+   "pose": {
+    "x": 2,
+    "y": 3,
+    "layer": 1,
+    "rot": 0
+   },
+   "hard_depends_on": [
+    "s1"
+   ],
+   "soft_depends_on": [
+    "s1"
+   ],
+   "optional": false,
+   "expected_duration_s": [
+    3.0,
+    20.0
+   ]
+  },
+  {
+   "id": "s3",
+   "instruction": "Place a black 2x2 brick with its bottom-left stud at (8, 3).",
+   "part": {
+    "color": "black",
+    "size": "2x2"
+   },
+   "pose": {
+    "x": 8,
+    "y": 3,
+    "layer": 0,
+    "rot": 0
+   },
+   "hard_depends_on": [],
+   "soft_depends_on": [],
+   "optional": false,
+   "expected_duration_s": [
+    3.0,
+    20.0
+   ]
+  },
+  {
+   "id": "s4",
+   "instruction": "Stack a second black 2x2 brick on top of that one.",
+   "part": {
+    "color": "black",
+    "size": "2x2"
+   },
+   "pose": {
+    "x": 8,
+    "y": 3,
+    "layer": 1,
+    "rot": 0
+   },
+   "hard_depends_on": [
+    "s3"
+   ],
+   "soft_depends_on": [
+    "s3"
+   ],
+   "optional": false,
+   "expected_duration_s": [
+    3.0,
+    20.0
+   ]
+  },
+  {
+   "id": "s5",
+   "instruction": "Lay a red 2x8 brick lengthwise, left to right, on top of both pillars, so that its left end sits on the left pillar and its right end on the right pillar.",
+   "part": {
+    "color": "red",
+    "size": "2x8"
+   },
+   "pose": {
+    "x": 2,
+    "y": 3,
+    "layer": 2,
+    "rot": 90
+   },
+   "hard_depends_on": [
+    "s2",
+    "s4"
+   ],
+   "soft_depends_on": [
+    "s2",
+    "s4"
+   ],
+   "optional": false,
+   "expected_duration_s": [
+    3.0,
+    20.0
+   ]
+  },
+  {
+   "id": "s6",
+   "instruction": "Stand a yellow 1x2 brick on the bridge, over the fourth column of studs counted from the bridge's left end, with its long side running away from you.",
+   "part": {
+    "color": "yellow",
+    "size": "1x2"
+   },
+   "pose": {
+    "x": 5,
+    "y": 3,
+    "layer": 3,
+    "rot": 0
+   },
+   "hard_depends_on": [
+    "s5"
+   ],
+   "soft_depends_on": [
+    "s5"
+   ],
+   "optional": false,
+   "expected_duration_s": [
+    3.0,
+    20.0
+   ]
+  }
+ ],
+ "phases": [],
+ "provenance": {
+  "compiler_version": "ground-truth",
+  "model": "hand",
+  "source": "",
+  "compiled_at": "",
+  "repaired": false
+ }
+}
