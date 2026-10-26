@@ -58,3 +58,31 @@ def test_a_detected_collapse_ends_the_session(constraint_spec) -> None:
     alerts = session.pump()
     assert [a.code for a in alerts] == ["game_over"]
     assert session.outcome == "game_over"
+
+
+def test_a_hand_over_the_top_and_back_is_not_a_collapse() -> None:
+    # game_04 at 59-62 s: an arm above the tower reads four layers too tall for
+    # three seconds, then the true height returns. That return is not a fall.
+    det = CollapseDetector(TowerLattice())
+    heights = [12 * LAYER_MM] * 10 + [16 * LAYER_MM] * 9 + [12 * LAYER_MM] * 10
+    assert not any(feed(det, heights))
+    # ...and the real fall afterwards is still caught.
+    assert any(feed(det, [5 * LAYER_MM] * 5, t0=10.0))
+
+
+def test_a_rise_that_holds_becomes_the_reference() -> None:
+    # A reference that started low (tower half-seen) is replaced once the true
+    # height has held long enough, so a later fall from it is measured right.
+    det = CollapseDetector(TowerLattice(), rise_frames=10)
+    feed(det, [4 * LAYER_MM] * 5 + [TALL] * 12)
+    assert min(det._recent) == TALL
+
+
+def test_a_drop_must_hold_for_confirm_s() -> None:
+    # An arm across a single camera hides the tower for seconds, then leaves.
+    det = CollapseDetector(TowerLattice(), confirm_s=8.0)
+    hidden = feed(det, [TALL] * 5 + [LAYER_MM] * 50 + [TALL] * 5, dt=0.1)
+    assert not any(hidden) and not det.pending
+    fell = feed(det, [LAYER_MM] * 90, t0=10.0, dt=0.1)
+    assert fell.index(True) == 80          # 8 s after the first low frame...
+    assert det.t_collapse == 10.0          # ...and dated to it

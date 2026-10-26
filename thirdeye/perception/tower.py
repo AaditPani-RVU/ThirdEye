@@ -266,14 +266,36 @@ class TowerReading:
         return (max(seen, default=-1) + 1) * HEIGHT
 
 
+def baseline(readings: dict[Slot, EndReading], max_mm: float = 40.0) -> dict[Slot, float]:
+    """The untouched tower's per-slot offsets, for `rebase`. A slot read deeper
+    than `max_mm` is empty (air above the tower), not a biased block; rebased,
+    it would read as a block at offset 0 for good."""
+    return {s: r.offset_mm for s, r in readings.items()
+            if r.state == "seen" and r.offset_mm is not None and r.offset_mm <= max_mm}
+
+
+def rebase(readings: dict[Slot, EndReading],
+           baseline: dict[Slot, float]) -> dict[Slot, EndReading]:
+    """Offsets measured against a baseline reading (the untouched tower) instead
+    of the ideal geometry, so a per-slot bias -- a chamfer, a block not quite
+    flush, a few mm of pose error -- does not read as a hole. Slots the baseline
+    has no number for keep their absolute offset."""
+    return {s: (EndReading("seen", r.offset_mm - baseline[s])
+                if r.state == "seen" and r.offset_mm is not None and s in baseline else r)
+            for s, r in readings.items()}
+
+
 def merge(a: dict[Slot, EndReading], b: dict[Slot, EndReading],
-          tol_mm: float = 6.0, alone_mm: float = 20.0) -> TowerReading:
+          tol_mm: float = 6.0, alone_mm: float = 20.0,
+          protrude_mm: float | None = None) -> TowerReading:
     """Two cameras' end readings -> one verdict per slot (see the module doc).
 
     With only one end seen, a block end at the face is still a block, but a
     recess must be deep (`alone_mm`) to count as a hole: shallower, it could be
-    a block pushed in, and the other end is not there to say.
+    a block pushed in, and the other end is not there to say. `protrude_mm`
+    (default `tol_mm`) is how far a lone end must stick out to count as moving.
     """
+    protrude_mm = tol_mm if protrude_mm is None else protrude_mm
     states: dict[Slot, SlotState] = {}
     for slot in sorted(set(a) | set(b)):
         ends = [r.offset_mm for r in (a.get(slot), b.get(slot))
@@ -284,7 +306,7 @@ def merge(a: dict[Slot, EndReading], b: dict[Slot, EndReading],
             (o,) = ends
             states[slot] = ("block" if abs(o) <= tol_mm else
                             "empty" if o >= alone_mm else
-                            "moving" if o < -tol_mm else "unknown")
+                            "moving" if o < -protrude_mm else "unknown")
         else:
             o1, o2 = ends
             if abs(o1) <= tol_mm and abs(o2) <= tol_mm:
@@ -367,3 +389,36 @@ def outline(view: DepthView, layers: int) -> np.ndarray:
                         for z in (0.0, top)])
     uv, _ = view.project(corners)
     return cv2.convexHull(uv.astype(np.float32)).reshape(-1, 2)
+
+
+def refine_pose(view: DepthView, footprint_mm: float = 2 * HALF) -> tuple[np.ndarray, np.ndarray]:
+    """(R, t) corrected against the depth map itself, for a mat whose markers sit
+    a few mm off the printed layout (a different print size, a curled sheet).
+
+    The marker pose fixes the rotation well but can be off in translation by a
+    few centimetres, and every end-face reading then inherits that as a bias.
+    Two things in the depth map pin it down, provided the first frames show the
+    untouched tower: the floor beside it must lie at z = 0, and the tower's
+    footprint must be centred on the origin. Both are measured as medians of
+    the back-projected depth in the tower frame, so a hand or a few pulled
+    blocks do not move them. Returns the pose unchanged if too little depth
+    is seen to say.
+    """
+    d = view.depth_mm
+    h, w = d.shape
+    u, v = np.meshgrid(np.arange(w), np.arange(h))
+    ok = d > 0
+    cam = np.stack([(u - view.K[0, 2]) / view.K[0, 0] * d,
+                    (v - view.K[1, 2]) / view.K[1, 1] * d, d], -1)[ok]
+    p = (cam - view.t) @ view.R  # R^T (cam - t)
+    r = 2.0 * footprint_mm
+    near = p[(np.abs(p[:, 0]) < r) & (np.abs(p[:, 1]) < r)]
+    side = near[(np.maximum(np.abs(near[:, 0]), np.abs(near[:, 1])) > footprint_mm)
+                & (np.abs(near[:, 2]) < 60)]
+    tower = near[near[:, 2] > 60]
+    if len(side) < 200 or len(tower) < 200:
+        return view.R, view.t
+    shift = np.array([-np.mean(np.percentile(tower[:, 0], [2, 98])),
+                      -np.mean(np.percentile(tower[:, 1], [2, 98])),
+                      -float(np.median(side[:, 2]))])
+    return view.R, view.t - view.R @ shift

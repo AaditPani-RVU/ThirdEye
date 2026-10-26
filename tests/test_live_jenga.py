@@ -12,7 +12,7 @@ from thirdeye.live_jenga import JengaPipeline
 from thirdeye.perception.hands import Hand
 from thirdeye.perception.record3d import Frame
 from thirdeye.session import Session
-from thirdeye.state.jenga.lattice import full_tower
+from thirdeye.state.jenga.lattice import TowerLattice, full_tower
 
 SPECS = Path(__file__).resolve().parents[1] / "specs"
 
@@ -122,7 +122,8 @@ def test_hands_hold_the_reading_and_their_count_rides_on_the_move() -> None:
 
 def test_a_collapse_ends_the_game() -> None:
     session, pipe = new()
-    run(pipe, session, [(tower(), None, 4), ([[1, 1, 1]] * 6, None, 4)])
+    # The heap has to stay down for `collapse_s` (8 s) before it counts.
+    run(pipe, session, [(tower(), None, 4), ([[1, 1, 1]] * 6, None, 90)])
     assert session.state.collapse_detected
     assert session.outcome is not None
 
@@ -145,3 +146,36 @@ def test_the_colour_only_baseline_drives_the_same_session() -> None:
             session.pump()
         t += 0.1
     assert session.state.current()[5][0] == 0
+
+
+def test_a_block_left_sticking_out_does_not_keep_the_tower_unsettled():
+    from thirdeye.events import Slot
+    from thirdeye.perception.tower import TowerReading
+
+    pipe = JengaPipeline(TowerLattice(full_tower()), cameras=1, hands=None, stable_frames=3)
+    out, ok = Slot(2, 1), Slot(0, 0)
+    seen = []
+    for _ in range(3):
+        seen.append(pipe._release_stuck(
+            TowerReading({out: "moving", ok: "block"}, settled=False)))
+    assert [r.settled for r in seen] == [False, False, True]
+    assert seen[-1].states[out] == "block"
+
+
+def test_a_moved_camera_is_followed_and_one_bad_solve_is_not():
+    import cv2 as _cv2
+
+    pipe = JengaPipeline(TowerLattice(full_tower()), cameras=1, hands=None, repose=True,
+                         poses=[(np.eye(3), np.array([0.0, 0.0, 600.0]))])
+    pipe._shift[0] = np.array([0.0, 0.0, 5.0])          # a refine correction, tower frame
+    still = (np.eye(3), np.array([0.0, 0.0, 600.0]))
+    moved = (_cv2.Rodrigues(np.array([0.0, np.radians(5), 0.0]))[0], np.array([30.0, 0.0, 600.0]))
+    pipe._follow(0, still)                               # first sighting: the starting point
+    pipe._follow(0, moved)
+    pipe._follow(0, still)                               # a one-frame blip is not a move
+    assert np.allclose(pipe.poses[0][1], [0.0, 0.0, 600.0])
+    for _ in range(3):
+        pipe._follow(0, moved)
+    R, t = pipe.poses[0]
+    assert np.allclose(R, moved[0])
+    assert np.allclose(t, moved[1] - moved[0] @ [0.0, 0.0, 5.0])   # correction carried over

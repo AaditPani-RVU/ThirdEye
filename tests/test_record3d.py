@@ -73,3 +73,30 @@ def test_the_command_line_describes_a_recording(tmp_path: Path, capsys) -> None:
     out = capsys.readouterr().out
     assert "1 frames at 30 fps" in out and "confidence maps: no" in out
     assert (tmp_path / "f.png").exists()
+
+
+def _eval_script():
+    import importlib.util
+    path = Path(__file__).resolve().parents[1] / "scripts" / "eval_framedir.py"
+    spec = importlib.util.spec_from_file_location("eval_framedir", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_the_eval_feeds_two_corner_recordings_in_step(tmp_path: Path) -> None:
+    depth = render([list(r) for r in full_tower()], *CORNER_A)
+    a = write_r3d(tmp_path / "a.r3d", [depth] * 7)
+    b = write_r3d(tmp_path / "b.r3d", [depth] * 5)
+    got = list(_eval_script().r3d_feed([a, b], every=2))
+    assert [round(t, 3) for _, t in got] == [0.0, round(2 / 30, 3), round(4 / 30, 3)]
+    assert all(len(frames) == 2 and None not in frames for frames, _ in got)
+
+
+def test_the_eval_matches_each_tap_to_one_removal_just_before_it() -> None:
+    score = _eval_script().score
+    removals = [{"t": 10.0}, {"t": 11.0}, {"t": 30.0}, {"t": 50.0}]
+    res = score(removals, marks=[12.0, 31.0, 40.0], window=6.0)
+    # 12 s takes the nearer of 10/11; 31 s takes 30; 40 s has nothing in reach.
+    assert res["hit"] == 2 and res["delays"] == [1.0, 1.0]
+    assert res["recall"] == round(2 / 3, 3) and res["precision"] == 0.5

@@ -4,6 +4,7 @@
 | --- | --- | --- |
 | Project plan — problem, architecture, timeline, risks | [`Third_Eye_Project_Plan.md`](Third_Eye_Project_Plan.md) | `Third_Eye_Project_Plan.pdf` |
 | Requirements specification — numbered, testable, traced to the plan | [`Third_Eye_Requirements.md`](Third_Eye_Requirements.md) | `Third_Eye_Requirements.pdf` |
+| Jenga on real recordings — what was measured, and how to record the next game | [`Jenga_Eval.md`](Jenga_Eval.md) | — |
 
 The markdown is the source of truth. The PDFs are generated artifacts — never edit one
 directly, and regenerate after any change to a document (requirements change control CC-4).

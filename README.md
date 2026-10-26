@@ -319,7 +319,7 @@ UI on Firebase Hosting as well. Server settings: `THIRDEYE_STORE` (`local` | `fi
 | Compiler accuracy | ✅ | **Groq gpt-oss-120b: steps 1.00, order P/R 0.98/1.00, rules 1.00**; 15/16 compiled |
 | Checker engine | ✅ | One loop for both spec forms; looks again before an out-of-order alert |
 | Jenga lattice + collapse detection | ✅ | |
-| Jenga depth perception | ✅ | Two corner depth views → slot occupancy; synthetic-tested, not yet on a real phone |
+| Jenga depth perception | 🟨 | Two corner depth views → slot occupancy. On real iPhone data, one camera finds 3 of 10 pulls at 75 % precision; two corners not yet recorded ([eval](docs/Jenga_Eval.md)) |
 | Jenga live loop | ✅ | Record3D stream or `.r3d` → tower → lattice, hands, collapse; synthetic-tested |
 | iPhone LiDAR input | 🟨 | Record3D `.r3d` reader built; format to confirm on a real recording; live USB stream untested |
 | Calibration + hand tracking | ✅ | ArUco homography, MediaPipe |
@@ -348,8 +348,10 @@ UI on Firebase Hosting as well. Server settings: `THIRDEYE_STORE` (`local` | `fi
 - [x] Empty and pushed-out slot detection from depth
 - [x] Live loop: Record3D stream → tower reading → lattice (`live_jenga.py`)
 - [x] Jenga rulebook → compiled spec, on a real LLM (4 rulebooks, all exact)
-- [ ] Check the `.r3d` reader and the depth margins on a real iPhone recording
-- [ ] Record and label real games
+- [x] Depth margins on real iPhone data (teammate's Oct 15 games, one camera): pose refinement, per-slot baseline, camera following, collapse hold ([eval](docs/Jenga_Eval.md))
+- [x] Colour-only layer finder: 73 % exact, 86 % top-2 on 49 labelled pulls (`perception/layerfinder.py`)
+- [ ] Record two-corner games with pull taps (`scripts/mark_pulls.py`) and score them (`scripts/eval_framedir.py --r3d`)
+- [ ] Check the `.r3d` reader on a real Record3D export
 
 </details>
 

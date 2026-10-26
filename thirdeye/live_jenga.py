@@ -46,9 +46,12 @@ from thirdeye.perception.tower import (
     DepthView,
     TowerGeometry,
     TowerReading,
+    baseline,
     merge,
     outline,
     read_view,
+    rebase,
+    refine_pose,
     tower_pose,
 )
 from thirdeye.perception.tower_rgb import RgbTowerReader
@@ -93,11 +96,39 @@ class JengaPipeline:
     #: Baseline: read the tower from colour alone (`tower_rgb.py`), ignoring depth.
     #: Each camera's first posed frame is taken as the full tower.
     rgb_only: bool = False
+    #: Correct each camera's marker pose against its first depth frame (floor at
+    #: z = 0, tower centred); assumes the tower is untouched then.
+    refine: bool = False
+    #: Read each slot against its own first reading, not the ideal geometry; the
+    #: first posed frame is taken as the untouched tower.
+    relative: bool = False
+    #: Only slots whose first reading is within this of the face join the
+    #: baseline; deeper ones are empty (air above the tower), not a block.
+    base_max_mm: float = 40.0
+    alone_mm: float = 20.0
+    protrude_mm: float | None = None
+    #: A collapse is a drop in height that holds this long (see `CollapseDetector`).
+    collapse_s: float = 8.0
+    #: Find the markers on every frame and follow the camera when it is moved
+    #: (a phone nudged or picked up), instead of posing it once.
+    repose: bool = False
+    #: A move is a marker pose this far from the current one...
+    move_mm: float = 8.0
+    move_deg: float = 1.5
+    #: ...for this many frames in a row (one bad marker solve is not a move).
+    move_frames: int = 3
 
     def __post_init__(self) -> None:
         self.poses = self.poses or [None] * self.cameras
         self._rgb: list[RgbTowerReader | None] = [None] * self.cameras
-        self.collapse = CollapseDetector(self.lattice)
+        self._base: list[dict | None] = [None] * self.cameras
+        #: Per camera: the marker pose in use, the `refine` correction (tower
+        #: frame) and how many frames in a row the markers disagreed with it.
+        self._raw: list[tuple[np.ndarray, np.ndarray] | None] = [None] * self.cameras
+        self._shift = [np.zeros(3) for _ in range(self.cameras)]
+        self._off = [0] * self.cameras
+        self._moving: dict = {}
+        self.collapse = CollapseDetector(self.lattice, confirm_s=self.collapse_s)
         self._candidate: list[list[int]] | None = None
         self._held = 0
         #: Most hands on the tower in any frame since the last observation.
@@ -106,6 +137,7 @@ class JengaPipeline:
 
     def process(self, frames: list[Frame | None], t: float) -> JengaResult:
         views: list[DepthView] = []
+        cams: list[int] = []
         rgb: list[TowerReading] = []
         hands_now = 0
         for i, frame in enumerate(frames):
@@ -113,7 +145,15 @@ class JengaPipeline:
                 continue
             if self.poses[i] is None:
                 t0 = time.perf_counter()
-                self.poses[i] = tower_pose(frame.colour, frame.K)
+                self._raw[i] = self.poses[i] = tower_pose(frame.colour, frame.K)
+                if self.refine and self.poses[i] is not None:
+                    R, t_raw = self.poses[i]
+                    self.poses[i] = refine_pose(frame.depth_view(R, t_raw))
+                    self._shift[i] = R.T @ (t_raw - self.poses[i][1])
+                self.timings.add("pose", time.perf_counter() - t0)
+            elif self.repose:
+                t0 = time.perf_counter()
+                self._follow(i, tower_pose(frame.colour, frame.K))
                 self.timings.add("pose", time.perf_counter() - t0)
             pose = self.poses[i]
             if pose is None:
@@ -138,6 +178,7 @@ class JengaPipeline:
                 rgb.append(reader.read(frame.colour, mask))
                 self.timings.add("tower", time.perf_counter() - t0)
             views.append(view)
+            cams.append(i)
         result = JengaResult(t=t, posed=sum(p is not None for p in self.poses), hands=hands_now)
         if not views:
             return result
@@ -147,8 +188,15 @@ class JengaPipeline:
         else:
             t0 = time.perf_counter()
             readings = [read_view(v, self.geom) for v in views]
-            reading = merge(readings[0], readings[1] if len(readings) > 1 else {})
+            if self.relative:
+                for k, (cam, r) in enumerate(zip(cams, readings, strict=True)):
+                    if self._base[cam] is None:
+                        self._base[cam] = baseline(r, self.base_max_mm)
+                    readings[k] = rebase(r, self._base[cam])
+            reading = merge(readings[0], readings[1] if len(readings) > 1 else {},
+                            alone_mm=self.alone_mm, protrude_mm=self.protrude_mm)
             self.timings.add("tower", time.perf_counter() - t0)
+        reading = self._release_stuck(reading)
         result.reading = reading
         self._max_hands = max(self._max_hands, hands_now)
 
@@ -158,7 +206,9 @@ class JengaPipeline:
                                  hands_in_contact=self._hands_or_none())
             result.observed = True
             return result
-        if not reading.usable or not reading.settled or hands_now:
+        # A tower that just lost many layers has fallen or is hidden; either way
+        # this is not a move to put in the lattice.
+        if not reading.usable or not reading.settled or hands_now or self.collapse.pending:
             self._candidate, self._held = None, 0
             return result
         occupancy = reading.occupancy(self.lattice.current(), self.geom.slots)
@@ -173,6 +223,45 @@ class JengaPipeline:
             self._outline_layers = len(occupancy) + 1
             result.observed = True
         return result
+
+    def _follow(self, cam: int, raw: tuple[np.ndarray, np.ndarray] | None) -> None:
+        """Adopt this frame's marker pose if the camera has moved. The `refine`
+        correction is an error in the mat, fixed in the tower frame, so it
+        carries over to the new pose (and the per-slot baseline stays valid)."""
+        if raw is None:  # markers hidden: keep the last pose
+            return
+        if self._raw[cam] is None:  # pose given, not found: this is where it sat
+            self._raw[cam] = raw
+            return
+        R0, t0 = self._raw[cam]
+        R, t = raw
+        angle = np.degrees(np.arccos(np.clip((np.trace(R0.T @ R) - 1) / 2, -1.0, 1.0)))
+        if np.linalg.norm(t - t0) < self.move_mm and angle < self.move_deg:
+            self._off[cam] = 0
+            return
+        self._off[cam] += 1
+        if self._off[cam] < self.move_frames:
+            return
+        self._raw[cam], self._off[cam] = raw, 0
+        self.poses[cam] = (R, t - R @ self._shift[cam])
+
+    def _release_stuck(self, reading: TowerReading) -> TowerReading:
+        """A block left sticking out (nudged, not pulled) reads "moving" for good and
+        would keep the tower from ever settling. A slot that was moving in at least
+        `stable_frames` of the last `2 * stable_frames` frames is not moving; it is a
+        block out of line, and counts as one."""
+        window = 2 * self.stable_frames
+        moving = {s for s, st in reading.states.items() if st == "moving"}
+        for slot in moving | set(self._moving):
+            hist = self._moving.setdefault(slot, [])
+            hist.append(slot in moving)
+            del hist[:-window]
+        self._moving = {s: h for s, h in self._moving.items() if any(h)}
+        stuck = {s for s in moving if sum(self._moving[s]) >= self.stable_frames}
+        if not stuck:
+            return reading
+        states = {s: ("block" if s in stuck else st) for s, st in reading.states.items()}
+        return TowerReading(states, not (moving - stuck), reading.unknown)
 
     def _hands_or_none(self) -> int | None:
         """No hand detector means we did not look, which is not zero hands."""
@@ -282,6 +371,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--rgb-only", action="store_true",
                     help="baseline: ignore depth, read the tower from colour alone")
     ap.add_argument("--no-hands", action="store_true")
+    ap.add_argument("--refine", action="store_true",
+                    help="correct the marker pose against depth (mat a few mm off its layout)")
+    ap.add_argument("--relative", action="store_true",
+                    help="read each slot against the first frame (the untouched tower)")
+    ap.add_argument("--repose", action="store_true", help="follow a camera that gets moved")
     ap.add_argument("--no-show", action="store_true")
     ap.add_argument("--seconds", type=float, default=None, help="stop after this long")
     ap.add_argument("--log", type=Path, default=None, help="session log path (IF-LOG-1)")
@@ -299,7 +393,8 @@ def main(argv: list[str] | None = None) -> int:
     assert isinstance(lattice, TowerLattice)
     hands = None if args.no_hands else [HandDetector() for _ in sources]
     pipeline = JengaPipeline(lattice, cameras=len(sources), hands=hands,
-                             stable_frames=args.stable_frames, rgb_only=args.rgb_only)
+                             stable_frames=args.stable_frames, rgb_only=args.rgb_only,
+                             refine=args.refine, relative=args.relative, repose=args.repose)
     feed = _Recordings(args.r3d) if args.r3d else _Streams(args.stream)
 
     start, frames, recent, t = time.monotonic(), 0, [], 0.0

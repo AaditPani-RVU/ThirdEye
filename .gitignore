@@ -42,3 +42,6 @@ eval/store/
 web/node_modules/
 web/dist/
 web/.env.production
+
+# teammate data bundle (9 GB, never committed)
+jenga-share*/
