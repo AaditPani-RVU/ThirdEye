@@ -56,10 +56,15 @@ cannot measure that.
 | Finder | Exact layer | Top 2 |
 | --- | --- | --- |
 | Teammate's (`move_infer.py`) | 82 %, optimistic: uncorrected answers count as right | – |
-| Ours (`thirdeye/perception/layerfinder.py`) | 73 % | 86 % |
+| Ours (`thirdeye/perception/layerfinder.py`) | 78 % | 92 % |
+| Ours, without the earlier pulls (`--no-physical`) | 73 % | 86 % |
 
 The tap gives the slot (left/middle/right). Our finder picks the layer whose end face changed
-most between a calm stretch after the previous tap and the seconds after this one. The
+most between a calm stretch after the previous tap and the seconds after this one. Layers
+where the tapped slot is already empty, or holds the layer's last block, are ruled out from the
+pulls confirmed earlier in the game (Oct 28: +5 points exact, +6 top 2). A pull that leaves one
+edge block is *not* ruled out: one game did that near the top and the tower stood. A "the face
+went dark" cue was also tried and lost 3–14 points, since a hole shows whatever is behind it. The
 teammate's "confident" flag is right 32 times out of 35. Layers count from 0 in the crops and
 from 1 in their labels.
 

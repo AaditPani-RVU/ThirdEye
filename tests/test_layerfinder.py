@@ -5,7 +5,7 @@ from __future__ import annotations
 import cv2
 import numpy as np
 
-from thirdeye.perception.layerfinder import find_layer, index_crops
+from thirdeye.perception.layerfinder import find_layer, index_crops, possible
 
 TAP = 20_000
 
@@ -59,3 +59,19 @@ def test_the_tap_slot_limits_the_search(tmp_path):
 def test_no_crops_around_the_tap_gives_no_answer(tmp_path):
     write_session(tmp_path, (3, 1), cams=("iphone",), layers=2)
     assert find_layer(index_crops(tmp_path), 90_000, slot=1) == []
+
+
+def test_physically_impossible_pulls_are_ruled_out(tmp_path):
+    # Layers 2 and 3 both change in slot 1, but slot 1 of layer 3 is already out.
+    write_session(tmp_path, (3, 1), (2, 1))
+    idx = index_crops(tmp_path)
+    assert set(find_layer(idx, TAP, slot=1, prev_ms=11_000)[:2]) == {2, 3}
+    rank = find_layer(idx, TAP, slot=1, prev_ms=11_000, removed={(3, 1)})
+    assert 3 not in rank and rank[0] == 2
+
+
+def test_possible_keeps_rule_breaking_but_survivable_pulls():
+    assert possible(4, 0, set())
+    assert not possible(4, 0, {(4, 0)})                  # already out
+    assert not possible(4, 1, {(4, 0), (4, 2)})          # the layer's last block
+    assert possible(4, 0, {(4, 1)})                      # leaves one edge: can still stand

@@ -10,8 +10,10 @@ of a calm stretch *before* is compared with one *after*; the layer whose face
 changed most is the pull. Scores are z-scored per camera and summed, so a
 camera that sees everything a little blurrier does not outvote the other.
 
-On the labelled Oct 20 sessions (49 pulls) this gets 73 % exact, 86 % top-2;
-see `scripts/eval_layerfinder.py`. Layers here count from 0, as the crop names
+Pulls already confirmed this game rule out layers where the tapped slot is
+empty or holds the layer's last block. On the labelled Oct 20 sessions (49
+pulls) this gets 78 % exact, 92 % top-2 (73 % / 86 % without that); see
+`scripts/eval_layerfinder.py`. Layers here count from 0, as the crop names
 do; the teammate's finder and the player's typed corrections count from 1.
 """
 
@@ -82,8 +84,28 @@ def layer_scores(idx: CropIndex, mark_ms: int, slot: int, prev_ms: int | None = 
     return dict(score)
 
 
+def possible(layer: int, slot: int, removed: set[tuple[int, int]]) -> bool:
+    """Could `slot` of `layer` be pulled with the tower still standing?
+
+    Not if it is already out, or if it is the layer's last block. These are
+    physical limits, not the game's rules: a pull the rules forbid (the top
+    complete layer, say) is still a candidate, because flagging it is the
+    checker's job. A pull leaving one edge block is kept too: near the top,
+    where little weight rests on it, friction can hold that (Oct 20, 17:00).
+    """
+    if (layer, slot) in removed:
+        return False
+    return any((layer, s) not in removed for s in range(3) if s != slot)
+
+
 def find_layer(idx: CropIndex, mark_ms: int, slot: int, prev_ms: int | None = None,
-               **kw) -> list[int]:
-    """Layers of `slot`, most likely pulled first; empty if no crops cover the tap."""
+               removed: set[tuple[int, int]] | None = None, **kw) -> list[int]:
+    """Layers of `slot`, most likely pulled first; empty if no crops cover the tap.
+
+    `removed` holds the (layer, slot) pulls already confirmed this game; layers
+    where this pull is physically impossible (see `possible`) are left out.
+    """
     sc = layer_scores(idx, mark_ms, slot, prev_ms, **kw)
+    if removed:
+        sc = {layer: x for layer, x in sc.items() if possible(layer, slot, removed)}
     return sorted(sc, key=sc.get, reverse=True)

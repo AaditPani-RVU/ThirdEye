@@ -5,7 +5,7 @@
 ### Catch mistakes in a procedure *as they happen*, from video, with rules an LLM reads from the manual.
 
 ![Python](https://img.shields.io/badge/python-3.11+-3776AB?logo=python&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-410%20passing-2e7d32)
+![Tests](https://img.shields.io/badge/tests-426%20passing-2e7d32)
 ![Status](https://img.shields.io/badge/status-in%20development-b8860b)
 ![LLM](https://img.shields.io/badge/LLM-Groq%20%C2%B7%20Ollama%20%C2%B7%20Gemini%20%C2%B7%20Claude-D97757)
 ![Cloud](https://img.shields.io/badge/deploy-Cloud%20Run%20%2B%20Firebase-4285F4)
@@ -349,7 +349,7 @@ UI on Firebase Hosting as well. Server settings: `THIRDEYE_STORE` (`local` | `fi
 - [x] Live loop: Record3D stream → tower reading → lattice (`live_jenga.py`)
 - [x] Jenga rulebook → compiled spec, on a real LLM (4 rulebooks, all exact)
 - [x] Depth margins on real iPhone data (teammate's Oct 15 games, one camera): pose refinement, per-slot baseline, camera following, collapse hold ([eval](docs/Jenga_Eval.md))
-- [x] Colour-only layer finder: 73 % exact, 86 % top-2 on 49 labelled pulls (`perception/layerfinder.py`)
+- [x] Colour-only layer finder: 78 % exact, 92 % top-2 on 49 labelled pulls (`perception/layerfinder.py`)
 - [ ] Record two-corner games with pull taps (`scripts/mark_pulls.py`) and score them (`scripts/eval_framedir.py --r3d`)
 - [ ] Check the `.r3d` reader on a real Record3D export
 

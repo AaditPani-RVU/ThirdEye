@@ -47,6 +47,8 @@ def main() -> int:
     ap.add_argument("dataset", type=Path)
     ap.add_argument("--pre", type=float, default=3.5, help="seconds of 'before' after the previous tap")
     ap.add_argument("--post", default="0.8:4.5")
+    ap.add_argument("--no-physical", dest="physical", action="store_false",
+                    help="don't drop pulls the tower could not survive, given the earlier confirmed ones")
     a = ap.parse_args()
     post = tuple(float(x) for x in a.post.split(":"))
     tot = {"n": 0, "teammate": 0, "ours": 0, "ours_top2": 0, "corrected": 0, "conf": 0, "conf_ok": 0}
@@ -57,11 +59,14 @@ def main() -> int:
         idx = index_crops(session)
         hit = ours = 0
         prev = None
+        removed: set[tuple[int, int]] = set()
         for g in gt:
             # The finder counts layers from 0; the labels count from 1.
             rank = [x + 1 for x in find_layer(idx, g["mark_ms"], g["slot"], prev,
+                                              removed if a.physical else None,
                                               pre_s=a.pre, post_s=post)]
             prev = g["mark_ms"]
+            removed.add((g["layer"] - 1, g["slot"]))
             g["ours"] = rank[0] if rank else None
             ours += g["ours"] == g["layer"]
             tot["ours_top2"] += g["layer"] in rank[:2]

@@ -17,7 +17,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-from thirdeye.perception.layerfinder import _median_face, index_crops, layer_scores
+from thirdeye.perception.layerfinder import _median_face, index_crops, layer_scores, possible
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from eval_layerfinder import truth
@@ -40,6 +40,7 @@ def main() -> int:
             continue
         idx = index_crops(session)
         prev = None
+        removed: set[tuple[int, int]] = set()
         for g in truth(session):
             mark = g["mark_ms"]
             lo = (prev + 1000) if prev else mark - 9000
@@ -50,7 +51,10 @@ def main() -> int:
             score = {k + 1: v for k, v in layer_scores(idx, mark, g["slot"],
                                                          None if lo == mark - 9000 else lo - 1000,
                                                          pre_s=PRE, post_s=POST).items()}
-            ours = max(score, key=score.get) if score else None
+            # as find_layer: no layer where this pull is physically impossible
+            fits = [k for k in score if possible(k - 1, g["slot"], removed)]
+            ours = max(fits, key=score.get) if fits else None
+            removed.add((g["layer"] - 1, g["slot"]))
             # the camera whose picture of our chosen block changed most shows the move best
             best_cam, best = None, -1.0
             for cam in ("android", "iphone"):

@@ -17,8 +17,8 @@ const STATS: Stat[] = [
     note: "Groq gpt-oss-120b. Step accuracy 1.00, Jenga rule accuracy 1.00. A local 8B model failed 9 of 16." },
   { value: "95 %", label: "report claims backed by the log", tone: "ok",
     note: "4 of 80 claims unsupported across 16 sessions (target ≤ 5 %)." },
-  { value: "73 %", label: "pulled layer found, real games", tone: "ok",
-    note: "49 pulls, 6 recorded games, colour only. 86 % in the top two. See Real games." },
+  { value: "78 %", label: "pulled layer found, real games", tone: "ok",
+    note: "49 pulls, 6 recorded games, colour only. 92 % in the top two. See Real games." },
   { value: "3 / 10", label: "pulls caught from depth, one camera", tone: "warn",
     note: "No false alarms at that setting, but one corner camera sees a pulled block as a 15–35 mm dip. Built for two." },
 ];
