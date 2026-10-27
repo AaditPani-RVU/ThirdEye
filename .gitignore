@@ -45,3 +45,4 @@ web/.env.production
 
 # teammate data bundle (9 GB, never committed)
 jenga-share*/
+eval/demo/

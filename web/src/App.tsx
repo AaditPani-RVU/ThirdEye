@@ -1,4 +1,4 @@
-// Sign in -> Procedures (pick, compile, edit) -> Live (replay or edge) -> History.
+// Sign in -> Overview -> Live (replay or edge) -> Real games -> Procedures (pick, compile, edit) -> History.
 // The page only draws what the server sends; nothing about a session is decided here.
 
 import { useEffect, useState } from "react";
@@ -8,13 +8,17 @@ import { firebaseConfigured, signIn, signOut, watchUser } from "./auth";
 import Live from "./pages/Live";
 import Procedures from "./pages/Procedures";
 import History from "./pages/History";
+import Overview from "./pages/Overview";
+import Games from "./pages/Games";
+import Camera from "./pages/Camera";
 
-type Tab = "live" | "procedures" | "history";
-const TABS: [Tab, string][] = [["live", "Live"], ["procedures", "Procedures"], ["history", "History"]];
+type Tab = "overview" | "live" | "camera" | "games" | "procedures" | "history";
+const TABS: [Tab, string][] = [["overview", "Overview"], ["live", "Live"], ["camera", "Camera"], ["games", "Real games"],
+  ["procedures", "Procedures"], ["history", "History"]];
 
 function tabFromHash(): Tab {
   const t = location.hash.replace(/^#\/?/, "").split("/")[0];
-  return (TABS.map(([k]) => k) as string[]).includes(t) ? (t as Tab) : "live";
+  return (TABS.map(([k]) => k) as string[]).includes(t) ? (t as Tab) : "overview";
 }
 
 export default function App() {
@@ -60,7 +64,10 @@ export default function App() {
         </span>
       </header>
       <main>
+        {tab === "overview" && <Overview />}
         {tab === "live" && <Live />}
+        {tab === "camera" && <Camera />}
+        {tab === "games" && <Games />}
         {tab === "procedures" && <Procedures editor={me?.editor ?? false} />}
         {tab === "history" && <History editor={me?.editor ?? false} />}
       </main>

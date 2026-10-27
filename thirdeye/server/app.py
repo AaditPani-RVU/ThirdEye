@@ -70,6 +70,7 @@ SCENARIOS = ROOT / "scripts" / "scenarios"
 SPECS = ROOT / "specs"
 UI = ROOT / "ui" / "index.html"
 WEB = ROOT / "web" / "dist"
+DEMO = ROOT / "eval" / "demo"
 
 #: An edge that has not been heard from for this long is shown as offline.
 EDGE_TIMEOUT_S = 15.0
@@ -453,8 +454,48 @@ def create_app(log_dir: Path | None = None, store: Store | None = None,
         finally:
             hub.clients.discard(socket)
 
+    # --- a phone camera (the capture app; see phone.py) ------------------------------
+    # The app cannot sign in, so these exist only when sign-in is off: on a laptop
+    # or a tailnet, never on Cloud Run.
+
+    if not auth.enabled:
+        from fastapi.concurrency import run_in_threadpool
+        from fastapi.responses import Response
+
+        from thirdeye.server.phone import PhoneFeed
+
+        phone = PhoneFeed(ROOT / "data" / "phone")
+        app.state.phone = phone
+
+        @app.post("/android")
+        async def android(request: Request) -> dict[str, Any]:
+            body = await request.body()
+            seq = int(request.headers.get("x-frame", 0) or 0)
+            return await run_in_threadpool(phone.push, body, seq)
+
+        @app.api_route("/cmd/{cmd}", methods=["GET", "POST"])
+        def phone_cmd(cmd: str) -> Response:
+            if not phone.command(cmd):
+                raise HTTPException(404, "unknown command")
+            return Response("OK", media_type="text/plain")
+
+        @app.get("/api/phone")
+        def phone_status() -> dict[str, Any]:
+            return phone.status()
+
+        @app.get("/api/phone/frame.jpg")
+        def phone_frame() -> Response:
+            jpeg = phone.frame()
+            if jpeg is None:
+                raise HTTPException(404, "no frame yet")
+            return Response(jpeg, media_type="image/jpeg", headers={"Cache-Control": "no-store"})
+
     # --- the UI -------------------------------------------------------------------
 
+    # Real-game pictures for the "Real games" page (scripts/make_demo_data.py):
+    # block-face crops only, built locally, never present on Cloud Run.
+    if DEMO.exists():
+        app.mount("/demo", StaticFiles(directory=DEMO), name="demo")
     if WEB.exists():
         app.mount("/", StaticFiles(directory=WEB, html=True), name="web")
     else:
