@@ -1,4 +1,4 @@
-// Sign in -> Overview -> Live (replay or edge) -> Real games -> Procedures (pick, compile, edit) -> History.
+// Sign in -> Overview -> Game (the game server's console) -> Live (replay or edge) -> Real games -> Procedures (pick, compile, edit) -> History.
 // The page only draws what the server sends; nothing about a session is decided here.
 
 import { useEffect, useState } from "react";
@@ -11,9 +11,10 @@ import History from "./pages/History";
 import Overview from "./pages/Overview";
 import Games from "./pages/Games";
 import Camera from "./pages/Camera";
+import Game from "./pages/Game";
 
-type Tab = "overview" | "live" | "camera" | "games" | "procedures" | "history";
-const TABS: [Tab, string][] = [["overview", "Overview"], ["live", "Live"], ["camera", "Camera"], ["games", "Real games"],
+type Tab = "overview" | "game" | "live" | "camera" | "games" | "procedures" | "history";
+const TABS: [Tab, string][] = [["overview", "Overview"], ["game", "Game"], ["live", "Live"], ["camera", "Camera"], ["games", "Real games"],
   ["procedures", "Procedures"], ["history", "History"]];
 
 function tabFromHash(): Tab {
@@ -65,6 +66,7 @@ export default function App() {
       </header>
       <main>
         {tab === "overview" && <Overview />}
+        {tab === "game" && <Game />}
         {tab === "live" && <Live />}
         {tab === "camera" && <Camera />}
         {tab === "games" && <Games />}

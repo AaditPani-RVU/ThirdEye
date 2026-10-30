@@ -533,6 +533,32 @@ def create_app(log_dir: Path | None = None, store: Store | None = None,
                 raise HTTPException(404, "no frame yet")
             return Response(jpeg, media_type="image/jpeg", headers={"Cache-Control": "no-store"})
 
+        # --- the game server's console (the React "Game" tab; see gameproxy.py) ---------
+
+        from thirdeye.server import gameproxy
+
+        @app.get("/game_info")
+        def game_info() -> dict[str, str]:
+            return {"url": gameproxy.GAME_URL}
+
+        def _game(method: str, path: str, body: bytes | None) -> Response:
+            try:
+                code, data, ctype = gameproxy.forward(method, path, body)
+            except KeyError:
+                raise HTTPException(404, "not a game-server path")
+            except gameproxy.GameUnreachable as exc:
+                raise HTTPException(502, str(exc))
+            return Response(data, status_code=code, media_type=ctype, headers={"Cache-Control": "no-store"})
+
+        @app.get("/game/{path:path}")
+        def game_get(path: str) -> Response:
+            return _game("GET", path, None)
+
+        @app.post("/game/{path:path}")
+        async def game_post(path: str, request: Request) -> Response:
+            body = await request.body()
+            return await run_in_threadpool(_game, "POST", path, body)
+
     # --- the UI -------------------------------------------------------------------
 
     # Real-game pictures for the "Real games" page (scripts/make_demo_data.py):

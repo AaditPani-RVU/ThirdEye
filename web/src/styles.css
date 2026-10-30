@@ -278,3 +278,41 @@ button.link { display: block; margin-top: 4px; padding: 0; border: 0; background
 .key .k-idle { background: var(--idle); }
 @media (prefers-reduced-motion: reduce) { .pill i, .toast { animation: none; } }
 @media (max-width: 700px) { .tower3d { height: 420px; } }
+
+/* --- Game console (pages/Game.tsx): the game server's viewer, in this UI ------------------ */
+.g-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 14px; align-items: start; }
+.g-view { display: flex; gap: 12px; min-width: 0; }
+.g-pane { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.g-plabel { font-weight: 700; font-size: 14px; color: var(--muted); display: flex; gap: 10px; align-items: center; }
+.g-tag { font-weight: 700; border-radius: 8px; padding: 2px 9px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); }
+.g-tag.ok, .g-chip.ok { background: color-mix(in srgb, var(--ok) 18%, var(--panel)); color: var(--ok); }
+.g-tag.warn, .g-chip.warn { background: color-mix(in srgb, var(--warn) 20%, var(--panel)); color: var(--warn); }
+.g-tag.bad, .g-chip.bad { background: color-mix(in srgb, var(--bad) 18%, var(--panel)); color: var(--bad); }
+.g-canvas { max-width: 100%; height: auto; border-radius: 10px; background: #000; }
+.g-side { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px;
+          max-height: calc(100vh - 90px); overflow: auto; position: sticky; top: 12px; }
+.g-side h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin: 18px 0 8px; font-weight: 600; }
+.g-side h3:first-child { margin-top: 0; }
+.g-side h3.g-warnh { color: var(--warn); }
+.g-chip { border-radius: 10px; padding: 10px 12px; font-weight: 700; font-size: 15px; margin-bottom: 8px; background: var(--bg); color: var(--muted); }
+.g-chip.small { font-size: 13px; font-weight: 600; }
+.g-btn { display: block; width: 100%; flex: none; margin: 8px 0 0; padding: 9px 10px; border-radius: 8px;
+         border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: inherit; cursor: pointer; }
+.g-btn:hover { border-color: var(--accent); }
+.g-btn.g-mark { background: color-mix(in srgb, var(--warn) 25%, var(--panel)); border-color: var(--warn); font-weight: 700; }
+.g-btn.g-blue { background: color-mix(in srgb, #2b8ad8 16%, var(--panel)); border-color: #2b8ad8; }
+.g-btn.g-stop { background: color-mix(in srgb, var(--bad) 22%, var(--panel)); border-color: var(--bad); }
+.g-btn.g-primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+.g-hint { color: var(--muted); font-size: 12.5px; margin: 8px 0 0; }
+.g-input { width: 100%; margin-top: 8px; padding: 10px; font-size: 15px; }
+.g-line { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+.g-line > span:first-child { color: var(--muted); }
+.g-line b { font-size: 20px; font-variant-numeric: tabular-nums; }
+.g-small { width: 70px; padding: 4px 6px; }
+.g-small.wide { width: 150px; }
+.g-pre { font-size: 11px; line-height: 1.35; background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+         padding: 8px; overflow: auto; white-space: pre; margin: 8px 0 0; }
+.g-alert { grid-column: 1 / -1; background: #c0281c; color: #fff; font-weight: 800; font-size: 26px; text-align: center;
+           padding: 14px 20px; border-radius: 12px; box-shadow: 0 4px 24px #0006; }
+.g-offline { max-width: 640px; margin: 40px auto; }
+@media (max-width: 1000px) { .g-wrap { grid-template-columns: 1fr; } .g-view { flex-direction: column; } .g-side { position: static; max-height: none; } }
