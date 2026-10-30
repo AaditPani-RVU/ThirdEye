@@ -1,11 +1,15 @@
 // The live session: start a replay (no hardware) or watch the edge laptop's
 // session; checklist or rules, legality panel or board, alerts, then the report.
 
-import { useEffect, useReducer, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { api, socketUrl, type Msg, type Row, type Rule, type SpecMeta, type Tower } from "../api";
 import { Banner } from "../App";
+import { Ask } from "../components/Ask";
+import { verdict, type Flash, type Mode } from "../jenga";
 import { Alerts, Board, Checklist, Markdown, Rules, TowerPanel, isBoard, type AlertItem } from "../components/Session";
 
+
+const Tower3D = lazy(() => import("../components/Tower3D"));
 interface View {
   procedure: string; kind: string; source: string; t: number; progress: string;
   checklist: Row[]; rules: Rule[]; next: string | null; tower?: Tower; frame?: string;
@@ -47,7 +51,35 @@ export default function Live() {
   const [speed, setSpeed] = useState("2");
   const [noise, setNoise] = useState("");
   const [cam, setCam] = useState({ spec: "", video: "", reference: "" });
+  const [game, setGame] = useState("http://127.0.0.1:8000");
   const [err, setErr] = useState("");
+  const [seed, setSeed] = useState<{ q: string; n: number }>();
+  const [mode, setMode] = useState<Mode>("legal");
+  const [flat, setFlat] = useState(false);
+  const [toast, setToast] = useState<AlertItem | null>(null);
+  const ask = (q: string) => setSeed((p) => ({ q, n: (p?.n ?? 0) + 1 }));
+  const explain = (a: AlertItem) =>
+    ask(`Explain the ${a.code.replaceAll("_", " ")} alert at ${a.t.toFixed(1)} s: what happened and what should have been done?`);
+
+  // The latest alert: a toast over the stage, and the block it names lit up in 3D.
+  const last = view.alerts[view.alerts.length - 1];
+  const flash = useMemo<Flash | undefined>(() => {
+    if (!last) return undefined;
+    const m = /took from L(\d+)s(\d+), placed at L(\d+)s(\d+)/.exec(last.text);
+    return m ? { from: [+m[1], +m[2]], to: [+m[3], +m[4]], key: view.alerts.length }
+             : { key: view.alerts.length };
+  }, [view.alerts.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!last || view.end) return;
+    setToast(last);
+    const t = window.setTimeout(() => setToast(null), 5000);
+    return () => clearTimeout(t);
+  }, [view.alerts.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  const counts = useMemo(() => {
+    const c = { safe: 0, topples: 0, blocked: 0 };
+    view.tower?.rows.forEach((r, L) => r.forEach((v, s) => { if (v) c[verdict(view.tower!, L, s)]++; }));
+    return c;
+  }, [view.tower]);
   const alive = useRef(true);
 
   useEffect(() => {
@@ -89,6 +121,9 @@ export default function Live() {
       {view.perception === "lost" && !view.end &&
         <Banner kind="warn">Calibration lost (markers hidden): alerts are paused until they are back in view.</Banner>}
       {view.error && <Banner kind="bad">{view.error}</Banner>}
+      {view.source.startsWith("game:") && !view.end &&
+        <Banner kind="warn">Following the game server: pulls come from its MARK taps and finder (with your corrections);
+          where each block was put back is not observed, so it is assumed legal.</Banner>}
 
       <section className="controls">
         <h2>Session</h2>
@@ -107,6 +142,18 @@ export default function Live() {
           <button className="primary" onClick={() => run("/api/replay", { scenario, speed: parseFloat(speed), noise })}>
             Replay
           </button>
+          <button onClick={() => run("/api/stop", {})}>Stop</button>
+        </div>
+
+        <h2 className="gap">Real game <span className="tag">phones</span></h2>
+        <p className="muted">
+          Follow the game server: both phones, a MARK tap after each pull, then left / middle / right.
+          Its confirmed pulls drive the tower, the rules and the LLM here.
+        </p>
+        <label>Game server</label>
+        <input value={game} onChange={(e) => setGame(e.target.value)} placeholder="http://127.0.0.1:8000" />
+        <div className="row">
+          <button className="primary" onClick={() => run("/api/follow", { url: game.trim() })}>Follow</button>
           <button onClick={() => run("/api/stop", {})}>Stop</button>
         </div>
 
@@ -136,23 +183,67 @@ export default function Live() {
 
       <section className="view">
         <h2>Live view</h2>
-        <div className="meta">
-          {view.procedure ? <><b>{view.procedure}</b> · {view.kind === "constraints" ? "rulebook" : "steps"}
-            {view.source && <> · {view.source}</>}{view.progress && <> · t={view.t.toFixed(1)}s · {view.progress}</>}</>
-            : "Pick a scenario and press Replay, or start a session on the edge laptop."}
-        </div>
+        {view.procedure ? (
+          <div className="status">
+            <span className={`pill ${view.end ? "" : view.source.startsWith("replay") ? "replay" : "live"}`}>
+              <i />{view.end ? "Ended" : view.source.startsWith("replay") ? "Replay"
+                : view.source.startsWith("game:") ? "Live · game server" : "Live"}
+            </span>
+            <span className="stat-chip"><b>{view.procedure}</b>{view.kind === "constraints" ? "rulebook" : "steps"}</span>
+            <span className="stat-chip"><b>{view.t.toFixed(1)} s</b>time</span>
+            {view.progress && <span className="stat-chip"><b>{view.progress.replace(/ moves$/, "")}</b>
+              {view.progress.endsWith("moves") ? "moves" : "steps"}</span>}
+            <span className={`stat-chip ${view.alerts.length ? "bad" : "ok"}`}><b>{view.alerts.length}</b>alerts</span>
+            {view.tower && <span className="stat-chip"><b>{view.tower.top_complete_layer}</b>top complete layer</span>}
+          </div>
+        ) : <p className="muted">Pick a scenario and press Replay, or start a session on the edge laptop.</p>}
         <div className="stage">
           {view.frame ? <img src={`data:image/jpeg;base64,${view.frame}`} alt="camera" />
-            : view.tower ? <TowerPanel t={view.tower} />
+            : view.tower ? (flat ? <TowerPanel t={view.tower} />
+              : <Suspense fallback={<TowerPanel t={view.tower} />}>
+                  <Tower3D tower={view.tower} mode={mode} flash={flash} onPick={(L, sl, kind) => ask(kind === "ghost"
+                    ? `Can the next block go at layer ${L}, slot ${sl}? Why?`
+                    : `Can I take the block at layer ${L}, slot ${sl}? Is it allowed, and would the tower stay up?`)} />
+                </Suspense>)
             : isBoard(view.checklist) ? <Board rows={view.checklist} next={view.next} />
             : view.kind === "constraints" ? <p className="muted">Waiting for the first tower reading…</p>
             : view.procedure ? <p className="muted">No board view for this procedure; follow the checklist.</p> : null}
+          {toast && (
+            <div className={`toast ${toast.severity}`}>
+              <div><b>{toast.code.replaceAll("_", " ")}</b> · {toast.t.toFixed(1)} s</div>
+              <div>{toast.text}</div>
+              <button className="link" onClick={() => { explain(toast); setToast(null); }}>Explain with the LLM →</button>
+            </div>
+          )}
         </div>
+        {view.tower && !view.frame && (
+          <div className="stage-bar">
+            <div className="seg">
+              <button className={!flat ? "on" : ""} onClick={() => setFlat(false)}>3D</button>
+              <button className={flat ? "on" : ""} onClick={() => setFlat(true)}>2D</button>
+            </div>
+            {!flat && (
+              <div className="seg">
+                <button className={mode === "legal" ? "on" : ""} onClick={() => setMode("legal")}>Where it can go</button>
+                <button className={mode === "safe" ? "on" : ""} onClick={() => setMode("safe")}>Safe pulls</button>
+              </div>
+            )}
+            {!flat && (mode === "legal" ? (
+              <span className="key"><i className="k-ghost" />next block may go · <i className="k-tcl" />top complete layer · drag to turn, click a block to ask</span>
+            ) : (
+              <span className="key">
+                <i className="k-ok" />safe {counts.safe} · <i className="k-warn" />would topple {counts.topples} · <i className="k-idle" />not allowed {counts.blocked}
+              </span>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="side">
         <h2>Alerts</h2>
-        <Alerts alerts={view.alerts} />
+        <Alerts alerts={view.alerts} onExplain={explain} />
+        <h2 className="gap">Ask the referee <span className="tag">LLM</span></h2>
+        <Ask ready={!!view.procedure} seed={seed} />
         <h2 className="gap">{rulebook ? "Rules in force" : "Checklist"}</h2>
         {rulebook ? <Rules rules={view.rules} /> : <Checklist rows={view.checklist} />}
       </section>

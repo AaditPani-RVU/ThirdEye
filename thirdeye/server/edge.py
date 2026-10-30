@@ -7,6 +7,9 @@
     python -m thirdeye.server.edge --cloud https://... --spec specs/example_constraints.json --stream 0
     python -m thirdeye.server.edge --cloud https://... --spec specs/example_constraints.json \
         --r3d cornerA.r3d --r3d cornerB.r3d
+    # Jenga, the game server's confirmed pulls (both phones, MARK taps; see gamelink.py)
+    python -m thirdeye.server.edge --cloud https://... --spec specs/example_constraints.json \
+        --follow http://127.0.0.1:8000
     # no hardware: a scripted scenario, to test the link
     python -m thirdeye.server.edge --cloud https://... --scenario jenga_fouls
 
@@ -128,6 +131,8 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover - needs a se
     src.add_argument("--r3d", type=Path, action="append")
     src.add_argument("--stream", type=int, action="append")
     src.add_argument("--scenario", help="a scripted scenario name, to test the link")
+    src.add_argument("--follow", metavar="URL",
+                     help="Jenga: follow the game server's confirmed pulls (gamelink.py)")
     ap.add_argument("--reference", type=Path, help="jigsaw: the box picture")
     ap.add_argument("--empty", type=Path, help="jigsaw: the empty board photo")
     ap.add_argument("--no-hands", action="store_true")
@@ -173,7 +178,13 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover - needs a se
 
         spec = load_spec(args.spec)
         session = Session(spec)
-        if isinstance(spec, ConstraintSpec):
+        if args.follow:
+            from thirdeye.server.gamelink import GameLink
+
+            if not isinstance(spec, ConstraintSpec):
+                ap.error("--follow needs a Jenga rulebook spec")
+            runner.start_follow(spec, GameLink(args.follow), meta={"spec": str(args.spec)})
+        elif isinstance(spec, ConstraintSpec):
             from thirdeye.live_jenga import JengaPipeline, _Recordings, _Streams
             from thirdeye.perception.hands import HandDetector
 

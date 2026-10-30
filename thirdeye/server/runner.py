@@ -213,6 +213,48 @@ class Runner:
 
         self._launch(run)
 
+    def start_follow(self, spec, link, poll_s: float = 0.5,
+                     meta: dict[str, Any] | None = None) -> None:
+        """The game server's confirmed pulls (`gamelink.py`), as a session. Runs until stopped
+        or the game server reports the game over."""
+        from thirdeye.server.gamelink import ASSUMED_PLACEMENT, LinkError, apply_pull, full
+        from thirdeye.session import Session
+        from thirdeye.state.jenga.lattice import TowerLattice
+
+        first = link.status()   # fail now, in the request, if the game server is not there
+        source = f"game:{link.url}"
+        meta = {"source": source, "note": ASSUMED_PLACEMENT, **(meta or {})}
+
+        def run() -> None:
+            start = time.monotonic()
+            st, session, tick, snap = first, None, None, ()
+            while True:
+                t = time.monotonic() - start
+                rebuild, new = link.plan(st)
+                if rebuild or session is None:
+                    snap = full(st.layers)
+                    session = Session(spec, state=TowerLattice(initial=snap))
+                    tick = self._watch(session)
+                    self.publish(protocol.hello(session, source=source))
+                for pull in new:
+                    snap = apply_pull(snap, pull)
+                    session.state.observe(snap, t)
+                    session.pump()
+                if st.game_over and not session.state.collapse_detected:
+                    session.state.collapse_detected = True
+                    session.state.observe(snap, t)
+                    session.pump()
+                tick(t, bool(new) or rebuild)
+                if session.outcome is not None or self._stop.wait(poll_s):
+                    break
+                try:
+                    st = link.status()
+                except LinkError:
+                    continue   # a blip on the Wi-Fi; the next poll catches up
+            self._finish(session, t, tick, meta)
+
+        self._launch(run)
+
 
 def _stamp() -> str:
     from datetime import UTC, datetime

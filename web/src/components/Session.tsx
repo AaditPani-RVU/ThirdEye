@@ -83,7 +83,7 @@ export function Rules({ rules }: { rules: Rule[] }) {
 
 export interface AlertItem { t: number; code: string; severity: string; text: string; target: string }
 
-export function Alerts({ alerts }: { alerts: AlertItem[] }) {
+export function Alerts({ alerts, onExplain }: { alerts: AlertItem[]; onExplain?: (a: AlertItem) => void }) {
   if (!alerts.length) return <p className="muted">None yet.</p>;
   return (
     <div className="alerts">
@@ -96,6 +96,7 @@ export function Alerts({ alerts }: { alerts: AlertItem[] }) {
             <span>{a.t.toFixed(1)}s</span>
           </div>
           {a.text}
+          {onExplain && <button className="link" onClick={() => onExplain(a)}>Explain with the LLM</button>}
         </div>
       ))}
     </div>

@@ -25,7 +25,9 @@ export default function Camera() {
   }, []);
 
   const cmd = (c: string) => fetch(`${API}/cmd/${c}`, { method: "POST" }).catch(() => {});
-  const host = location.hostname.endsWith(".ts.net") ? "100.122.110.15" : location.hostname;
+  // A phone cannot reach the tailnet name or this machine's loopback; give it the tailnet IP.
+  const local = ["localhost", "127.0.0.1", "::1"].includes(location.hostname);
+  const host = location.hostname.endsWith(".ts.net") || local ? "100.122.110.15" : location.hostname;
 
   if (off) return <Banner kind="warn">Phone camera is not available on this server (sign-in is on).</Banner>;
   const ok = (st?.markers.length ?? 0) >= 2;

@@ -26,10 +26,13 @@ HTTP (sign-in required when THIRDEYE_AUTH=firebase; * = editors only):
                                           "model"} -> a validated spec, not yet saved
     POST /api/replay                     {"scenario": "jigsaw_rotated", "speed": 2.0, "noise": ""}
     POST /api/camera                  *  local camera or video (see CameraRequest)
+    POST /api/follow                  *  {"url", "spec"} -> follow the game server's confirmed pulls
     POST /api/stop
     GET  /api/sessions                   history, newest first
     GET  /api/sessions/{id}              summary, report and full log
     POST /api/sessions/{id}/report    *  rewrite the report with the LLM
+    POST /api/ask                     *  {"question", "model"} -> the LLM's answer about the
+                                          live session, from what the camera saw
     GET  /api/edge                       is an edge laptop connected?
     POST /api/edge/publish               edge token: {"messages": [...]}
     POST /api/edge/log                   edge token: {"record": {...}, "report": "..."}
@@ -82,6 +85,11 @@ class ReplayRequest(BaseModel):
     noise: str = ""
 
 
+class FollowRequest(BaseModel):
+    url: str = Field(default="http://127.0.0.1:8000", pattern=r"^https?://[^\s/]+(:\d+)?/?$")
+    spec: str = "example_constraints"
+
+
 class CameraRequest(BaseModel):
     spec: str
     camera: int | None = 0
@@ -104,6 +112,11 @@ class CompileRequest(BaseModel):
     rows: int | None = Field(default=None, ge=2, le=40)
     model: str | None = None
     name: str | None = None
+
+
+class AskRequest(BaseModel):
+    question: str = Field(min_length=1, max_length=500)
+    model: str | None = None
 
 
 class EdgeMessages(BaseModel):
@@ -373,6 +386,23 @@ def create_app(log_dir: Path | None = None, store: Store | None = None,
                                                meta={"spec": req.spec})
         return {"started": source}
 
+    @app.post("/api/follow")
+    def follow(req: FollowRequest, u: EditorDep) -> dict[str, str]:
+        from thirdeye.compiler.schema import ConstraintSpec, parse_spec
+        from thirdeye.server.gamelink import GameLink, LinkError
+
+        raw = db.get_spec(req.spec)
+        if raw is None:
+            raise HTTPException(404, f"no spec named {req.spec!r}")
+        spec = parse_spec(raw)
+        if not isinstance(spec, ConstraintSpec):
+            raise HTTPException(400, "following the game server needs a Jenga rulebook spec")
+        try:
+            hub.fresh_runner(u.label).start_follow(spec, GameLink(req.url), meta={"spec": req.spec})
+        except LinkError as exc:
+            raise HTTPException(502, str(exc)) from exc
+        return {"started": f"game:{req.url}"}
+
     @app.post("/api/stop")
     def stop(_: UserDep) -> dict[str, bool]:
         running = hub.runner is not None and hub.runner.running
@@ -409,6 +439,19 @@ def create_app(log_dir: Path | None = None, store: Store | None = None,
             raise HTTPException(502, f"the LLM call failed: {exc}") from exc
         db.set_report(sid, report)
         return {"report": report}
+
+    @app.post("/api/ask")
+    def ask_(req: AskRequest, _: EditorDep) -> dict[str, Any]:
+        from thirdeye.compiler.llm import LLMError, make_llm
+        from thirdeye.explain.ask import ask
+
+        try:
+            llm = make_llm(req.model, max_tokens=2000)
+            return ask(list(hub.history), req.question, llm).json()
+        except LLMError as exc:
+            raise HTTPException(502, f"the LLM call failed: {exc}") from exc
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
 
     # --- the edge laptop ----------------------------------------------------------
 
