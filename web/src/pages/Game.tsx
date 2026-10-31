@@ -11,6 +11,7 @@ const G = (p: string) => `${API}/game/${p}`;
 const post = (p: string, body?: unknown) =>
   fetch(G(p), { method: "POST", body: body === undefined ? undefined : JSON.stringify(body) }).catch(() => {});
 
+interface Labels { w: number; h: number; items: [string, number, number, number, string][] }
 interface Overlay { green: number; amber?: number; red: number }
 interface GameStatus {
   cv: boolean; markers: number[]; android_markers: number[];
@@ -27,11 +28,19 @@ interface GameStatus {
   height_info?: { lidar_layers: number; top_mm: number } | null;
   tower_fit?: { shift_mm: number[]; tilt_deg: number; twist_deg: number; height_mm: number; layers: number;
                 layers_float: number; inliers: number; rms_mm: number; converged: boolean } | null;
+  labels?: { iphone?: Labels; android?: Labels };
   no_moves?: boolean;
   game_over?: { reason: string } | null;
 }
 
-function drawTo(cv: HTMLCanvasElement, img: HTMLImageElement, rot: number) {
+const LEGEND: [string, string][] = [
+  ["white: layer, counted from the bottom", "#fff"],
+  ["yellow digit: slot of layers 1,3,5,7,9", "#ffd700"],
+  ["cyan digit: slot of layers 2,4,6,8,10", "#00dcff"],
+];
+
+// The picture is turned by the viewer, so its labels are drawn here, upright, at the turned positions.
+function drawTo(cv: HTMLCanvasElement, img: HTMLImageElement, rot: number, lab?: Labels) {
   const x = cv.getContext("2d");
   if (!x) return;
   const turned = rot % 180 !== 0;
@@ -42,19 +51,37 @@ function drawTo(cv: HTMLCanvasElement, img: HTMLImageElement, rot: number) {
   x.rotate((rot * Math.PI) / 180);
   x.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
   x.restore();
+  const k = img.naturalWidth / 960;
+  const a = (rot * Math.PI) / 180, c = Math.cos(a), s = Math.sin(a);
+  if (lab && lab.w === img.naturalWidth && lab.h === img.naturalHeight) {
+    x.lineJoin = "round";
+    for (const [t, px, py, sc, col] of lab.items) {
+      const dx = px - lab.w / 2, dy = py - lab.h / 2;
+      const X = cv.width / 2 + dx * c - dy * s, Y = cv.height / 2 + dx * s + dy * c;
+      x.font = `bold ${Math.round(sc * 34 * k)}px sans-serif`;
+      x.lineWidth = 4 * k; x.strokeStyle = "#000"; x.strokeText(t, X, Y);
+      x.fillStyle = col; x.fillText(t, X, Y);
+    }
+  }
+  const f = Math.round(15 * k), lh = Math.round(22 * k);
+  x.font = `${f}px sans-serif`;
+  x.fillStyle = "#000"; x.fillRect(4 * k, cv.height - 4 * k - lh * LEGEND.length - 6 * k, 330 * k, lh * LEGEND.length + 6 * k);
+  LEGEND.forEach(([t, col], i) => { x.fillStyle = col; x.fillText(t, 10 * k, cv.height - 10 * k - lh * (LEGEND.length - 1 - i)); });
 }
 
-function Feed({ path, gap, rot }: { path: string; gap: number; rot: number }) {
+function Feed({ path, gap, rot, labels }: { path: string; gap: number; rot: number; labels?: Labels }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const rotRef = useRef(rot);
   rotRef.current = rot;
+  const labRef = useRef(labels);
+  labRef.current = labels;
   useEffect(() => {
     let dead = false;
     let timer = 0;
     const next = (ms: number) => { if (!dead) timer = window.setTimeout(load, ms); };
     const load = () => {
       const im = new Image();
-      im.onload = () => { if (ref.current) drawTo(ref.current, im, rotRef.current); next(gap); };
+      im.onload = () => { if (ref.current) drawTo(ref.current, im, rotRef.current, labRef.current); next(gap); };
       im.onerror = () => next(600);
       im.src = `${G(path)}?${Date.now()}`;
     };
@@ -194,11 +221,11 @@ export default function Game() {
       <div className="g-view">
         <div className="g-pane">
           <div className="g-plabel">iPhone · LiDAR <span className={`g-tag ${aCls}`}>{aTxt}</span></div>
-          <Feed path="preview.jpg" gap={40} rot={rotA} />
+          <Feed path="preview.jpg" gap={10} rot={rotA} labels={s.labels?.iphone} />
         </div>
         <div className="g-pane">
           <div className="g-plabel">Android <span className={`g-tag ${bCls}`}>{bTxt}</span></div>
-          <Feed path="android.jpg" gap={120} rot={rotB} />
+          <Feed path="android.jpg" gap={120} rot={rotB} labels={s.labels?.android} />
         </div>
       </div>
 
